@@ -13,6 +13,8 @@
 #include "common/Vector3.h"
 #include "common/Matrix44.h"
 
+namespace Scene {
+
 class Model {
 	public:
 		Model(const std::string& filename);
@@ -56,6 +58,7 @@ class MeshInstance : public Movable {
 		Common::Matrix44 mRotation;
 };
 
+}
 
 #endif
 

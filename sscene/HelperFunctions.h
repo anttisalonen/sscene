@@ -12,6 +12,8 @@
 #include "common/Matrix44.h"
 #include "common/Texture.h"
 
+namespace Scene {
+
 class HelperFunctions {
 	public:
 		static Common::Matrix44 translationMatrix(const Common::Vector3& v);
@@ -26,6 +28,8 @@ class HelperFunctions {
 
 		static void enableDepthTest();
 };
+
+}
 
 #endif
 

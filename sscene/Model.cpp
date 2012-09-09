@@ -6,6 +6,9 @@
 #include "HelperFunctions.h"
 
 using namespace Common;
+using namespace Scene;
+
+namespace Scene {
 
 Model::Model(const std::string& filename)
 {
@@ -131,6 +134,8 @@ void MeshInstance::setRotation(const Matrix44& m)
 const Model& MeshInstance::getModel() const
 {
 	return mModel;
+}
+ 
 }
 
 

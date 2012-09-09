@@ -8,6 +8,7 @@
 #include "common/Math.h"
 
 using namespace Common;
+using namespace Scene;
 
 #define USE_BAKED_IN_SHADERS
 

@@ -6,6 +6,9 @@
 #include "common/Texture.h"
 
 using namespace Common;
+using namespace Scene;
+
+namespace Scene {
 
 Matrix44 HelperFunctions::perspectiveMatrix(float fov, int screenwidth, int screenheight)
 {
@@ -143,4 +146,5 @@ Matrix44 HelperFunctions::rotationMatrixFromEuler(const Vector3& v)
 	return rotation;
 }
 
+}
 
