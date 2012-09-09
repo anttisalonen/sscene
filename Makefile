@@ -3,29 +3,28 @@ CXXFLAGS = -std=c++11 -Wall -Werror $(shell sdl-config --cflags) -O2 -I.
 LDFLAGS  = $(shell sdl-config --libs) -lSDL_image -lSDL_ttf -lGL -lGLEW -lassimp
 AR       = ar
 
-default: $(LIBSCENELIB)
-
-all: $(LIBSCENELIB) SceneCube
-
 COMMONDIR = common
 COMMONSRCS = $(shell (find $(COMMONDIR) \( -name '*.cpp' -o -name '*.h' \)))
 
 COMMONLIB = $(COMMONDIR)/libcommon.a
 
-$(COMMONLIB): $(COMMONSRCS)
-	make -C $(COMMONDIR)
-
-
 LIBSCENESRCDIR = sscene
 LIBSCENESRCFILES = Model.cpp HelperFunctions.cpp Scene.cpp
 LIBSCENESRCS = $(addprefix $(LIBSCENESRCDIR)/, $(LIBSCENESRCFILES))
 LIBSCENEOBJS = $(LIBSCENESRCS:.cpp=.o)
-LIBSCENELIB = libscene.a
+LIBSCENELIB = libsscene.a
 
 LIBSCENESHADERFILES = scene.vert scene.frag
 LIBSCENESHADERDIR = $(LIBSCENESRCDIR)/shaders
 LIBSCENESHADERSRCS = $(addprefix $(LIBSCENESHADERDIR)/, $(LIBSCENESHADERFILES))
 LIBSCENESHADERS = $(addsuffix .h, $(LIBSCENESHADERSRCS))
+
+default: $(LIBSCENELIB)
+
+all: $(LIBSCENELIB) SceneCube
+
+$(COMMONLIB): $(COMMONSRCS)
+	make -C $(COMMONDIR)
 
 $(LIBSCENESHADERS):
 	for file in $(LIBSCENESHADERS); do ./shader.sh $$file; done
