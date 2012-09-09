@@ -22,6 +22,11 @@ namespace Scene {
 const Vector3 WorldForward = Vector3(1, 0, 0);
 const Vector3 WorldUp      = Vector3(0, 1, 0);
 
+// must match Drawable::initBuffers()
+#define VERTEX_POS_INDEX 0
+#define TEXCOORD_INDEX 1
+#define NORMAL_INDEX 2
+
 Camera::Camera()
 	: mTarget(WorldForward),
 	mUp(WorldUp),
@@ -59,15 +64,18 @@ void Camera::setMovementKey(const std::string& key, float forward,
 Vector3 Camera::calculateMovement(const std::tuple<float, float, float>& v)
 {
 	Vector3 r;
-	r += mTarget * std::get<0>(v);
-	r += mUp * std::get<1>(v);
-	r += mTarget.cross(mUp) * std::get<2>(v);
+	if(std::get<0>(v))
+		r += mTarget * std::get<0>(v);
+	if(std::get<1>(v))
+		r += mUp * std::get<1>(v);
+	if(std::get<2>(v))
+		r += mTarget.cross(mUp) * std::get<2>(v);
 	return r;
 }
 
 void Camera::clearMovementKey(const std::string& key)
 {
-	auto t = mMovement[key];
+	auto& t = mMovement[key];
 	mMovementCache[t].zero();
 	std::get<0>(t) = 0;
 	std::get<1>(t) = 0;
@@ -77,7 +85,8 @@ void Camera::clearMovementKey(const std::string& key)
 void Camera::applyMovementKeys(float coeff)
 {
 	for(auto p : mMovement) {
-		mPosition += calculateMovement(p.second);
+		auto m = calculateMovement(p.second);
+		mPosition += m;
 	}
 }
 
@@ -203,6 +212,89 @@ void DirectionalLight::setDirection(const Common::Vector3& dir)
 }
 
 
+class Drawable {
+	public:
+		Drawable(GLuint programObject, const Model& model);
+		~Drawable();
+		Drawable(const std::string& filename);
+		Drawable& operator=(const Drawable&) = delete;
+		Drawable(const Drawable&) = delete;
+
+		GLuint getVertexBuffer() const;
+		GLuint getTexCoordBuffer() const;
+		GLuint getNormalBuffer() const;
+		GLuint getIndexBuffer() const;
+		unsigned int getNumIndices() const;
+
+	private:
+		void initBuffers(GLuint programObject, const Model& model);
+
+		GLuint mVBOIDs[4];
+		unsigned int mNumIndices;
+};
+
+Drawable::Drawable(GLuint programObject, const Model& model)
+{
+	initBuffers(programObject, model);
+	mNumIndices = model.getIndices().size();
+}
+
+Drawable::~Drawable()
+{
+	glDeleteBuffers(4, mVBOIDs);
+}
+
+GLuint Drawable::getVertexBuffer() const
+{
+	return mVBOIDs[0];
+}
+
+GLuint Drawable::getTexCoordBuffer() const
+{
+	return mVBOIDs[1];
+}
+
+GLuint Drawable::getNormalBuffer() const
+{
+	return mVBOIDs[2];
+}
+
+GLuint Drawable::getIndexBuffer() const
+{
+	return mVBOIDs[3];
+}
+
+unsigned int Drawable::getNumIndices() const
+{
+	return mNumIndices;
+}
+
+void Drawable::initBuffers(GLuint programObject, const Model& model)
+{
+	glGenBuffers(4, mVBOIDs);
+	struct attrib {
+		const char* name;
+		int elems;
+		const std::vector<GLfloat>& data;
+	};
+
+
+	attrib attribs[] = { { "a_Position", 3, model.getVertexCoords() },
+		{ "a_Texcoord", 2, model.getTexCoords() },
+		{ "m_Normals", 3, model.getNormals() } };
+
+	int i = 0;
+	for(auto& a : attribs) {
+		glBindBuffer(GL_ARRAY_BUFFER, mVBOIDs[i]);
+		glBufferData(GL_ARRAY_BUFFER, a.data.size() * sizeof(GLfloat), &a.data[0], GL_STATIC_DRAW);
+		glVertexAttribPointer(i, a.elems, GL_FLOAT, GL_FALSE, 0, NULL);
+		i++;
+	}
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mVBOIDs[3]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.getIndices().size() * sizeof(GLushort),
+			&model.getIndices()[0], GL_STATIC_DRAW);
+}
 
 Scene::Scene(float screenWidth, float screenHeight)
 	: mScreenWidth(screenWidth),
@@ -298,42 +390,12 @@ Scene::Scene(float screenWidth, float screenHeight)
 
 void Scene::bindAttributes()
 {
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindAttribLocation(mProgramObject, 0, "a_Position");
-	glBindAttribLocation(mProgramObject, 1, "a_Texcoord");
-	glEnableVertexAttribArray(2);
-	glBindAttribLocation(mProgramObject, 2, "a_Normal");
-}
-
-void Scene::setupModelData(const Model& model)
-{
-	GLuint vboids[4];
-	glGenBuffers(4, vboids);
-	struct attrib {
-		const char* name;
-		int elems;
-		const std::vector<GLfloat>& data;
-	};
-
-
-	attrib attribs[] = { { "a_Position", 3, model.getVertexCoords() },
-		{ "a_Texcoord", 2, model.getTexCoords() },
-		{ "m_Normals", 3, model.getNormals() } };
-
-	int i = 0;
-	for(auto& a : attribs) {
-		glBindBuffer(GL_ARRAY_BUFFER, vboids[i]);
-		glBufferData(GL_ARRAY_BUFFER, a.data.size() * sizeof(GLfloat), &a.data[0], GL_STATIC_DRAW);
-		glEnableVertexAttribArray(i);
-		glVertexAttribPointer(i, a.elems, GL_FLOAT, GL_FALSE, 0, NULL);
-		glBindAttribLocation(mProgramObject, i, a.name);
-		i++;
-	}
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboids[3]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.getIndices().size() * sizeof(GLushort),
-			&model.getIndices()[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(VERTEX_POS_INDEX);
+	glBindAttribLocation(mProgramObject, VERTEX_POS_INDEX, "a_Position");
+	glEnableVertexAttribArray(TEXCOORD_INDEX);
+	glBindAttribLocation(mProgramObject, TEXCOORD_INDEX, "a_Texcoord");
+	glEnableVertexAttribArray(NORMAL_INDEX);
+	glBindAttribLocation(mProgramObject, NORMAL_INDEX, "a_Normal");
 }
 
 boost::shared_ptr<Common::Texture> Scene::getModelTexture(const std::string& mname) const
@@ -464,7 +526,16 @@ void Scene::render()
 			glUniform3f(mUniformLocationMap["u_directionalLightDirection"], dir.x, dir.y, dir.z);
 		}
 
-		glDrawElements(GL_TRIANGLES, mi.second->getModel().getIndices().size(),
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mi.second->getDrawable().getIndexBuffer());
+
+		glBindBuffer(GL_ARRAY_BUFFER, mi.second->getDrawable().getVertexBuffer());
+		glVertexAttribPointer(VERTEX_POS_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, mi.second->getDrawable().getTexCoordBuffer());
+		glVertexAttribPointer(TEXCOORD_INDEX, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, mi.second->getDrawable().getNormalBuffer());
+		glVertexAttribPointer(NORMAL_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+		glDrawElements(GL_TRIANGLES, mi.second->getDrawable().getNumIndices(),
 				GL_UNSIGNED_SHORT, NULL);
 	}
 }
@@ -478,24 +549,27 @@ void Scene::addTexture(const std::string& name, const std::string& filename)
 	}
 }
 
-void Scene::addModel(const std::string& name, const std::string& filename)
+void Scene::addModel(const std::string& name, const Model& model)
 {
-	if(mModels.find(name) != mModels.end()) {
+	if(mDrawables.find(name) != mDrawables.end()) {
 		throw std::runtime_error("Tried adding a model with an already existing name");
 	} else {
-		auto m = boost::shared_ptr<Model>(new Model(filename));
-		mModels.insert({name, m});
-		setupModelData(*m);
+		boost::shared_ptr<Drawable> d(new Drawable(mProgramObject, model));
+		mDrawables.insert({name, d});
 	}
 }
 
-boost::shared_ptr<Model> Scene::getModel(const std::string& name)
+void Scene::addModel(const std::string& name, const std::string& filename)
 {
-	auto it = mModels.find(name);
-	if(it == mModels.end()) {
+	auto m = Model(filename);
+	addModel(name, m);
+}
+
+void Scene::getModel(const std::string& name)
+{
+	auto it = mDrawables.find(name);
+	if(it == mDrawables.end()) {
 		throw std::runtime_error("Tried getting a non-existing model\n");
-	} else {
-		return it->second;
 	}
 }
 
@@ -506,8 +580,8 @@ boost::shared_ptr<MeshInstance> Scene::addMeshInstance(const std::string& name,
 		throw std::runtime_error("Tried adding a mesh instance with an already existing name");
 	}
 
-	auto modelit = mModels.find(modelname);
-	if(modelit == mModels.end())
+	auto modelit = mDrawables.find(modelname);
+	if(modelit == mDrawables.end())
 		throw std::runtime_error("Tried getting a non-existing model\n");
 
 	auto textit = mTextures.find(texturename);

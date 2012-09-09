@@ -66,6 +66,53 @@ Model::Model(const std::string& filename)
 	}
 }
 
+Model::Model()
+{
+}
+
+void Model::addVertex(const Common::Vector3& v)
+{
+	mVertexCoords.push_back(v.x);
+	mVertexCoords.push_back(v.y);
+	mVertexCoords.push_back(v.z);
+}
+
+void Model::addNormal(const Common::Vector3& v)
+{
+	mNormals.push_back(v.x);
+	mNormals.push_back(v.y);
+	mNormals.push_back(v.z);
+}
+
+void Model::addTexCoord(float u, float v)
+{
+	mTexCoords.push_back(u);
+	mTexCoords.push_back(v);
+}
+
+void Model::addIndex(unsigned short i)
+{
+	mIndices.push_back(i);
+}
+
+void Model::addTriangleIndices(unsigned short i1,
+		unsigned short i2,
+		unsigned short i3)
+{
+	mIndices.push_back(i1);
+	mIndices.push_back(i2);
+	mIndices.push_back(i3);
+}
+
+void Model::addQuadIndices(unsigned short i1,
+		unsigned short i2,
+		unsigned short i3,
+		unsigned short i4)
+{
+	addTriangleIndices(i1, i2, i3);
+	addTriangleIndices(i1, i3, i4);
+}
+
 const std::vector<GLfloat>& Model::getVertexCoords() const
 {
 	return mVertexCoords;
@@ -111,8 +158,8 @@ void Movable::move(const Common::Vector3& v)
 }
 
 
-MeshInstance::MeshInstance(const Model& m)
-	: mModel(m)
+MeshInstance::MeshInstance(const Drawable& m)
+	: mDrawable(m)
 {
 }
 
@@ -131,11 +178,11 @@ void MeshInstance::setRotation(const Matrix44& m)
 	mRotation = m;
 }
 
-const Model& MeshInstance::getModel() const
+const Drawable& MeshInstance::getDrawable() const
 {
-	return mModel;
+	return mDrawable;
 }
- 
+
 }
 
 

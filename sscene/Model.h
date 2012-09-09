@@ -17,11 +17,24 @@ namespace Scene {
 
 class Model {
 	public:
+		Model();
 		Model(const std::string& filename);
 		const std::vector<GLfloat>& getVertexCoords() const;
 		const std::vector<GLfloat>& getTexCoords() const;
 		const std::vector<GLushort> getIndices() const;
 		const std::vector<GLfloat>& getNormals() const;
+
+		void addVertex(const Common::Vector3& v);
+		void addNormal(const Common::Vector3& v);
+		void addTexCoord(float u, float v);
+		void addIndex(unsigned short i);
+		void addTriangleIndices(unsigned short i1,
+				unsigned short i2,
+				unsigned short i3);
+		void addQuadIndices(unsigned short i1,
+				unsigned short i2,
+				unsigned short i3,
+				unsigned short i4);
 
 	private:
 		std::vector<GLfloat> mVertexCoords;
@@ -45,16 +58,18 @@ class Movable {
 		Common::Vector3 mPosition;
 };
 
+class Drawable;
+
 class MeshInstance : public Movable {
 	public:
-		MeshInstance(const Model& m);
+		MeshInstance(const Drawable& m);
 		const Common::Matrix44& getRotation() const;
 		void setRotationFromEuler(const Common::Vector3& v);
 		void setRotation(const Common::Matrix44& m);
-		const Model& getModel() const;
+		const Drawable& getDrawable() const;
 
 	private:
-		const Model& mModel;
+		const Drawable& mDrawable;
 		Common::Matrix44 mRotation;
 };
 

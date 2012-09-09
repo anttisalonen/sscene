@@ -92,6 +92,8 @@ class DirectionalLight : public Light {
 		Common::Vector3 mDirection;
 };
 
+class Drawable;
+
 class Scene {
 	public:
 		Scene(float screenWidth, float screenHeight);
@@ -108,7 +110,8 @@ class Scene {
 		void render();
 		void addTexture(const std::string& name, const std::string& filename);
 		void addModel(const std::string& name, const std::string& filename);
-		boost::shared_ptr<Model> getModel(const std::string& name);
+		void addModel(const std::string& name, const Model& model);
+		void getModel(const std::string& name);
 		boost::shared_ptr<MeshInstance> addMeshInstance(const std::string& name,
 				const std::string& modelname,
 				const std::string& texturename);
@@ -118,7 +121,6 @@ class Scene {
 		void updateMVPMatrix(const MeshInstance& mi);
 		void updateFrameMatrices(const Camera& cam);
 		void bindAttributes();
-		void setupModelData(const Model& model);
 		boost::shared_ptr<Common::Texture> getModelTexture(const std::string& mname) const;
 
 		float mScreenWidth;
@@ -141,7 +143,7 @@ class Scene {
 		Common::Matrix44 mViewMatrix;
 		Common::Matrix44 mPerspectiveMatrix;
 
-		std::map<std::string, boost::shared_ptr<Model>> mModels;
+		std::map<std::string, boost::shared_ptr<Drawable>> mDrawables;
 		std::map<std::string, boost::shared_ptr<MeshInstance>> mMeshInstances;
 		std::map<std::string, boost::shared_ptr<Common::Texture>> mMeshInstanceTextures;
 };
