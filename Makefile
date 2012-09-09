@@ -12,6 +12,7 @@ LIBSCENESRCDIR = sscene
 LIBSCENESRCFILES = Model.cpp HelperFunctions.cpp Scene.cpp
 LIBSCENESRCS = $(addprefix $(LIBSCENESRCDIR)/, $(LIBSCENESRCFILES))
 LIBSCENEOBJS = $(LIBSCENESRCS:.cpp=.o)
+LIBSCENEDEPS = $(LIBSCENESRCS:.cpp=.dep)
 LIBSCENELIB = libsscene.a
 
 LIBSCENESHADERFILES = scene.vert scene.frag
@@ -26,7 +27,7 @@ all: $(LIBSCENELIB) SceneCube
 $(COMMONLIB): $(COMMONSRCS)
 	make -C $(COMMONDIR)
 
-$(LIBSCENESHADERS):
+$(LIBSCENESHADERS): shader.sh
 	for file in $(LIBSCENESHADERS); do ./shader.sh $$file; done
 
 $(LIBSCENELIB): $(LIBSCENESHADERS) $(LIBSCENEOBJS)
@@ -49,4 +50,6 @@ clean:
 	rm -rf $(LIBSCENESHADERDIR)/*.h
 	rm -rf $(LIBSCENELIB)
 	rm -rf tests/bin
+
+-include $(LIBSCENEDEPS)
 
