@@ -436,15 +436,6 @@ PointLight& Scene::getPointLight()
 	return mPointLight;
 }
 
-void Scene::addQuad(const Vector3& p1,
-		const Vector3& p2,
-		const Vector3& p3,
-		const Vector3& p4,
-		const Color& c)
-{
-	/* TODO */
-}
-
 void Scene::calculateModelMatrix(const MeshInstance& mi)
 {
 	auto translation = HelperFunctions::translationMatrix(mi.getPosition());

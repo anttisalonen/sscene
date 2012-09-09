@@ -102,11 +102,6 @@ class Scene {
 		Light& getAmbientLight();
 		DirectionalLight& getDirectionalLight();
 		PointLight& getPointLight();
-		void addQuad(const Common::Vector3& p1,
-				const Common::Vector3& p2,
-				const Common::Vector3& p3,
-				const Common::Vector3& p4,
-				const Common::Color& c);
 		void render();
 		void addTexture(const std::string& name, const std::string& filename);
 		void addModel(const std::string& name, const std::string& filename);
