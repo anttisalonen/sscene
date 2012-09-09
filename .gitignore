@@ -1,0 +1,7 @@
+*.dep
+*.o
+*.a
+tmp/
+tags
+sscene/shaders/*.h
+tests/bin/
