@@ -99,9 +99,9 @@ void Model::addTriangleIndices(unsigned short i1,
 		unsigned short i2,
 		unsigned short i3)
 {
-	mIndices.push_back(i1);
-	mIndices.push_back(i2);
 	mIndices.push_back(i3);
+	mIndices.push_back(i2);
+	mIndices.push_back(i1);
 }
 
 void Model::addQuadIndices(unsigned short i1,

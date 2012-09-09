@@ -386,6 +386,8 @@ Scene::Scene(float screenWidth, float screenHeight)
 		p.second = glGetUniformLocation(mProgramObject, p.first);
 	}
 
+	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
 }
 
 void Scene::bindAttributes()
