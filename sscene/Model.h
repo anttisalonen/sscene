@@ -12,6 +12,7 @@
 
 #include "common/Vector3.h"
 #include "common/Matrix44.h"
+#include "common/Quaternion.h"
 
 namespace Scene {
 
@@ -54,8 +55,20 @@ class Movable {
 		const Common::Vector3& getPosition() const;
 		void move(const Common::Vector3& v);
 
+		const Common::Matrix44& getRotation() const;
+		void setRotationFromEuler(const Common::Vector3& v);
+		void setRotation(const Common::Matrix44& m);
+		void setRotation(const Common::Quaternion& q);
+		void setRotation(const Common::Vector3& axis, float angle);
+		void setRotation(const Common::Vector3& forward, const Common::Vector3& up);
+		void addRotation(const Common::Matrix44& m, bool local);
+		void addRotation(const Common::Vector3& axis, float angle, bool local);
+		Common::Vector3 getTargetVector() const;
+		Common::Vector3 getUpVector() const;
+
 	protected:
 		Common::Vector3 mPosition;
+		Common::Matrix44 mRotation;
 };
 
 class Drawable;
@@ -63,14 +76,10 @@ class Drawable;
 class MeshInstance : public Movable {
 	public:
 		MeshInstance(const Drawable& m);
-		const Common::Matrix44& getRotation() const;
-		void setRotationFromEuler(const Common::Vector3& v);
-		void setRotation(const Common::Matrix44& m);
 		const Drawable& getDrawable() const;
 
 	private:
 		const Drawable& mDrawable;
-		Common::Matrix44 mRotation;
 };
 
 }

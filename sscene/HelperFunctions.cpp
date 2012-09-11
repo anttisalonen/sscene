@@ -146,5 +146,32 @@ Matrix44 HelperFunctions::rotationMatrixFromEuler(const Vector3& v)
 	return rotation;
 }
 
+Matrix44 HelperFunctions::rotationMatrixFromAxisAngle(const Common::Vector3& axis, float angle)
+{
+	float ct = cos(angle);
+	float oct = 1.0f - ct;
+	float st = sin(angle);
+	const Vector3 v = axis.normalized();
+	const float& x = v.x;
+	const float& y = v.y;
+	const float& z = v.z;
+
+	Matrix44 r = Matrix44::Identity;
+
+	r.m[0] = ct + x * x * oct;
+	r.m[1] = x * y * oct - z * st;
+	r.m[2] = x * z * oct - y * st;
+
+	r.m[4] = y * x * oct + z * st;
+	r.m[5] = ct + y * y * oct;
+	r.m[6] = y * z * oct - x * st;
+
+	r.m[8] = z * x * oct - y * st;
+	r.m[9] = z * y * oct + x * st;
+	r.m[10] = ct + z * z * oct;
+
+	return r;
+}
+
 }
 

@@ -38,8 +38,6 @@ class Camera : public Movable {
 		void setUpwardsMovement(float speed);
 		void clearUpwardsMovement();
 		void rotate(float yaw, float pitch);
-		const Common::Vector3& getTargetVector() const;
-		const Common::Vector3& getUpVector() const;
 
 	private:
 		void setMovementKey(const std::string& key, float forward,
@@ -47,9 +45,6 @@ class Camera : public Movable {
 		void clearMovementKey(const std::string& key);
 
 		Common::Vector3 calculateMovement(const std::tuple<float, float, float>& tuple);
-
-		Common::Vector3 mTarget;
-		Common::Vector3 mUp;
 
 		std::map<std::string, std::tuple<float, float, float>> mMovement;
 		std::map<std::tuple<float, float, float>, Common::Vector3> mMovementCache;

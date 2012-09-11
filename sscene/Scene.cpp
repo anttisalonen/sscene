@@ -28,29 +28,15 @@ const Vector3 WorldUp      = Vector3(0, 1, 0);
 #define NORMAL_INDEX 2
 
 Camera::Camera()
-	: mTarget(WorldForward),
-	mUp(WorldUp),
-	mHRot(0.0f),
+	: mHRot(0.0f),
 	mVRot(0.0f)
 {
+	setRotation(WorldForward, WorldUp);
 }
 
-void Camera::lookAt(const Common::Vector3& tgt, const Common::Vector3& right)
+void Camera::lookAt(const Common::Vector3& tgt, const Common::Vector3& up)
 {
-#if 0
-	/* TODO: this doesn't work due to mHRot and mVRot. */
-	auto v = tgt - mPosition;
-	if(v.null() || right.null())
-		return;
-
-	auto t = v.normalized();
-	auto u = right.cross(t.normalized());
-	if(t.null() || u.null())
-		return;
-
-	mTarget = t;
-	mUp = u;
-#endif
+	setRotation(tgt, up);
 }
 
 void Camera::setMovementKey(const std::string& key, float forward,
@@ -65,11 +51,11 @@ Vector3 Camera::calculateMovement(const std::tuple<float, float, float>& v)
 {
 	Vector3 r;
 	if(std::get<0>(v))
-		r += mTarget * std::get<0>(v);
+		r += getTargetVector() * std::get<0>(v);
 	if(std::get<1>(v))
-		r += mUp * std::get<1>(v);
+		r += getUpVector() * std::get<1>(v);
 	if(std::get<2>(v))
-		r += mTarget.cross(mUp) * std::get<2>(v);
+		r += getTargetVector().cross(getUpVector()) * std::get<2>(v);
 	return r;
 }
 
@@ -129,22 +115,12 @@ void Camera::rotate(float yaw, float pitch)
 
 	auto haxis = WorldUp.cross(view).normalized();
 
-	mTarget = Math::rotate3D(view, -mVRot, haxis).normalized();
-	mUp = mTarget.cross(haxis).normalized();
+	Vector3 tgt = Math::rotate3D(view, -mVRot, haxis).normalized();
+	setRotation(tgt, tgt.cross(haxis).normalized());
 
 	for(auto p : mMovement) {
 		mMovementCache[p.second] = calculateMovement(p.second);
 	}
-}
-
-const Common::Vector3& Camera::getTargetVector() const
-{
-	return mTarget;
-}
-
-const Common::Vector3& Camera::getUpVector() const
-{
-	return mUp;
 }
 
 Light::Light(const Common::Color& col, bool on)

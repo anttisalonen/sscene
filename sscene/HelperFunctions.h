@@ -21,6 +21,8 @@ class HelperFunctions {
 		static Common::Matrix44 perspectiveMatrix(float fov, int screenwidth, int screenheight);
 		static Common::Matrix44 cameraRotationMatrix(const Common::Vector3& tgt, const Common::Vector3& up);
 
+		static Common::Matrix44 rotationMatrixFromAxisAngle(const Common::Vector3& axis, float angle);
+
 		static GLuint loadShader(GLenum type, const char* src);
 		static GLuint loadShaderFromFile(GLenum type, const char* filename);
 
