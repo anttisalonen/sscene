@@ -148,6 +148,7 @@ Matrix44 HelperFunctions::rotationMatrixFromEuler(const Vector3& v)
 
 Matrix44 HelperFunctions::rotationMatrixFromAxisAngle(const Common::Vector3& axis, float angle)
 {
+	/* TODO: this function may not be correct. */
 	float ct = cos(angle);
 	float oct = 1.0f - ct;
 	float st = sin(angle);
