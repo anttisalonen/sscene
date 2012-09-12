@@ -123,7 +123,7 @@ const std::vector<GLfloat>& Model::getTexCoords() const
 	return mTexCoords;
 }
 
-const std::vector<GLushort> Model::getIndices() const
+const std::vector<GLushort>& Model::getIndices() const
 {
 	return mIndices;
 }

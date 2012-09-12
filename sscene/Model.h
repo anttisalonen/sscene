@@ -22,7 +22,7 @@ class Model {
 		Model(const std::string& filename);
 		const std::vector<GLfloat>& getVertexCoords() const;
 		const std::vector<GLfloat>& getTexCoords() const;
-		const std::vector<GLushort> getIndices() const;
+		const std::vector<GLushort>& getIndices() const;
 		const std::vector<GLfloat>& getNormals() const;
 
 		void addVertex(const Common::Vector3& v);
