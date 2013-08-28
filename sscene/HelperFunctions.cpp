@@ -174,5 +174,14 @@ Matrix44 HelperFunctions::rotationMatrixFromAxisAngle(const Common::Vector3& axi
 	return r;
 }
 
+Common::Vector3 HelperFunctions::rotateVector(const Common::Matrix44& mat, const Common::Vector3& v)
+{
+	Vector3 ret;
+	ret.x = mat.m[0] * v.x + mat.m[1] * v.y + mat.m[2] * v.z;
+	ret.y = mat.m[4] * v.x + mat.m[5] * v.y + mat.m[6] * v.z;
+	ret.z = mat.m[8] * v.x + mat.m[9] * v.y + mat.m[10] * v.z;
+	return ret;
+}
+
 }
 

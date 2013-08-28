@@ -22,6 +22,7 @@ class HelperFunctions {
 		static Common::Matrix44 cameraRotationMatrix(const Common::Vector3& tgt, const Common::Vector3& up);
 
 		static Common::Matrix44 rotationMatrixFromAxisAngle(const Common::Vector3& axis, float angle);
+		static Common::Vector3 rotateVector(const Common::Matrix44& mat, const Common::Vector3& v);
 
 		static GLuint loadShader(GLenum type, const char* src);
 		static GLuint loadShaderFromFile(GLenum type, const char* filename);
