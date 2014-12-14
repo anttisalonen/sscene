@@ -70,6 +70,40 @@ Model::Model()
 {
 }
 
+Model::Model(const Heightmap& heightmap)
+{
+	int w = heightmap.getWidth();
+
+	int whalf = w / 2;
+	for(int j = 0; j < w; j++) {
+		for(int i = 0; i < w; i++) {
+			addVertex(Vector3(i - whalf, heightmap.getHeightAt(i, j), j - whalf));
+			addTexCoord(i / (float)w, j / (float)w);
+			Vector3 p1(i,
+					heightmap.getHeightAt(i, j),
+					j);
+			Vector3 p2(i + 1,
+					heightmap.getHeightAt(i + 1, j),
+					j);
+			Vector3 p3(i,
+					heightmap.getHeightAt(i, j + 1),
+					j + 1);
+			Vector3 u(p2 - p1);
+			Vector3 v(p3 - p1);
+			addNormal(v.cross(u).normalized());
+		}
+	}
+
+	for(int j = 0; j < w - 1; j++) {
+		for(int i = 0; i < w - 1; i++) {
+			addQuadIndices(j * w + i,
+					j * w + i + 1,
+					(j + 1) * w + i + 1,
+					(j + 1) * w + i);
+		}
+	}
+}
+
 void Model::addVertex(const Common::Vector3& v)
 {
 	mVertexCoords.push_back(v.x);

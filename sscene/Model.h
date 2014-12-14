@@ -16,10 +16,21 @@
 
 namespace Scene {
 
+class Heightmap {
+	public:
+		virtual ~Heightmap() { }
+		virtual float getHeightAt(float x, float y) const = 0;
+		virtual float getWidth() const = 0;
+};
+
 class Model {
 	public:
 		Model();
 		Model(const std::string& filename);
+		Model(const Heightmap& heightmap);
+
+	private:
+		friend class Drawable;
 		const std::vector<GLfloat>& getVertexCoords() const;
 		const std::vector<GLfloat>& getTexCoords() const;
 		const std::vector<GLushort>& getIndices() const;

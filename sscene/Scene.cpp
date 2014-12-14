@@ -192,7 +192,6 @@ class Drawable {
 	public:
 		Drawable(GLuint programObject, const Model& model);
 		~Drawable();
-		Drawable(const std::string& filename);
 		Drawable& operator=(const Drawable&) = delete;
 		Drawable(const Drawable&) = delete;
 
@@ -201,18 +200,21 @@ class Drawable {
 		GLuint getNormalBuffer() const;
 		GLuint getIndexBuffer() const;
 		unsigned int getNumIndices() const;
+		unsigned int getNumVertices() const;
 
 	private:
 		void initBuffers(GLuint programObject, const Model& model);
 
 		GLuint mVBOIDs[4];
 		unsigned int mNumIndices;
+		unsigned int mNumVertices;
 };
 
 Drawable::Drawable(GLuint programObject, const Model& model)
 {
 	initBuffers(programObject, model);
 	mNumIndices = model.getIndices().size();
+	mNumVertices = model.getVertexCoords().size() / 3;
 }
 
 Drawable::~Drawable()
@@ -245,6 +247,11 @@ unsigned int Drawable::getNumIndices() const
 	return mNumIndices;
 }
 
+unsigned int Drawable::getNumVertices() const
+{
+	return mNumVertices;
+}
+
 void Drawable::initBuffers(GLuint programObject, const Model& model)
 {
 	glGenBuffers(4, mVBOIDs);
@@ -257,7 +264,7 @@ void Drawable::initBuffers(GLuint programObject, const Model& model)
 
 	attrib attribs[] = { { "a_Position", 3, model.getVertexCoords() },
 		{ "a_Texcoord", 2, model.getTexCoords() },
-		{ "m_Normals", 3, model.getNormals() } };
+		{ "a_Normal", 3, model.getNormals() } };
 
 	int i = 0;
 	for(auto& a : attribs) {
@@ -471,7 +478,7 @@ void Scene::render()
 		glUniform3f(mUniformLocationMap["u_ambientLight"], col.x, col.y, col.z);
 	}
 
-	for(auto& mi : mMeshInstances) {
+	for(const auto& mi : mMeshInstances) {
 		/* TODO: add support for vertex colors. */
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, getModelTexture(mi.first)->getTexture());
@@ -495,17 +502,35 @@ void Scene::render()
 			glUniform3f(mUniformLocationMap["u_directionalLightDirection"], dir.x, dir.y, dir.z);
 		}
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mi.second->getDrawable().getIndexBuffer());
+		const auto& d = mi.second->getDrawable();
+		const auto& ib = d.getIndexBuffer();
+		if(d.getNumIndices() != 0) {
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+		}
 
-		glBindBuffer(GL_ARRAY_BUFFER, mi.second->getDrawable().getVertexBuffer());
+		glBindBuffer(GL_ARRAY_BUFFER, d.getVertexBuffer());
 		glVertexAttribPointer(VERTEX_POS_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glBindBuffer(GL_ARRAY_BUFFER, mi.second->getDrawable().getTexCoordBuffer());
+		glBindBuffer(GL_ARRAY_BUFFER, d.getTexCoordBuffer());
 		glVertexAttribPointer(TEXCOORD_INDEX, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		glBindBuffer(GL_ARRAY_BUFFER, mi.second->getDrawable().getNormalBuffer());
+		glBindBuffer(GL_ARRAY_BUFFER, d.getNormalBuffer());
 		glVertexAttribPointer(NORMAL_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-		glDrawElements(GL_TRIANGLES, mi.second->getDrawable().getNumIndices(),
-				GL_UNSIGNED_SHORT, NULL);
+		if(d.getNumIndices() != 0) {
+			glDrawElements(GL_TRIANGLES, d.getNumIndices(),
+					GL_UNSIGNED_SHORT, NULL);
+		} else {
+			glDrawArrays(GL_TRIANGLES, 0, d.getNumVertices());
+		}
+
+		{
+			while(1) {
+				GLenum err = glGetError();
+				if(err == GL_NO_ERROR) {
+					break;
+				}
+				fprintf(stderr, "GL error 0x%04x\n", err);
+			}
+		}
 	}
 }
 
@@ -524,6 +549,8 @@ void Scene::addModel(const std::string& name, const Model& model)
 		throw std::runtime_error("Tried adding a model with an already existing name");
 	} else {
 		boost::shared_ptr<Drawable> d(new Drawable(mProgramObject, model));
+		std::cout << (d->getNumVertices()) << " vertices.\n";
+		std::cout << (d->getNumIndices() / 3) << " triangles.\n";
 		mDrawables.insert({name, d});
 	}
 }
@@ -531,6 +558,12 @@ void Scene::addModel(const std::string& name, const Model& model)
 void Scene::addModel(const std::string& name, const std::string& filename)
 {
 	auto m = Model(filename);
+	addModel(name, m);
+}
+
+void Scene::addModelFromHeightmap(const std::string& name, const Heightmap& heightmap)
+{
+	auto m = Model(heightmap);
 	addModel(name, m);
 }
 

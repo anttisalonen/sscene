@@ -101,6 +101,7 @@ class Scene {
 		void addTexture(const std::string& name, const std::string& filename);
 		void addModel(const std::string& name, const std::string& filename);
 		void addModel(const std::string& name, const Model& model);
+		void addModelFromHeightmap(const std::string& name, const Heightmap& heightmap);
 		void getModel(const std::string& name);
 		boost::shared_ptr<MeshInstance> addMeshInstance(const std::string& name,
 				const std::string& modelname,

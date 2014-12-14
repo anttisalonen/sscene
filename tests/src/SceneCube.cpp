@@ -30,6 +30,22 @@ class SceneCube : public Common::Driver {
 		std::map<SDLKey, std::function<void (float)>> mControls;
 };
 
+class Heightmap : public Scene::Heightmap {
+	public:
+		virtual float getHeightAt(float x, float y) const;
+		virtual float getWidth() const;
+};
+
+float Heightmap::getHeightAt(float x, float y) const
+{
+	return 3.0f * sin(x * 0.20f) + 5.0f * cos(y * 0.10f) - 8.0f;
+}
+
+float Heightmap::getWidth() const
+{
+	return 128;
+}
+
 SceneCube::SceneCube()
 	: Common::Driver(screenWidth, screenHeight, "Cube"),
 	mScene(Scene::Scene(800, 600)),
@@ -48,12 +64,15 @@ SceneCube::SceneCube()
 	mControls[SDLK_LEFT] = [&] (float p) { mCamera.setSidewaysMovement(-p); };
 
 	mCamera = mScene.getDefaultCamera();
-	mCamera.setPosition(Vector3(1.9f, 1.9f, -4.2f));
+	mCamera.setPosition(Vector3(1.9f, 1.9f, 4.2f));
 	mCamera.rotate(Math::degreesToRadians(90), 0);
 	handleMouseMove(0, 0);
 
 	mScene.addModel("Cube", "share/textured-cube.obj");
 	mScene.addTexture("Snow", "share/snow.jpg");
+
+	Heightmap hm;
+	mScene.addModelFromHeightmap("Terrain", hm);
 
 	auto mi1 = mScene.addMeshInstance("Cube1", "Cube", "Snow");
 	mi1->setPosition(Vector3(-0.1, 0.0f, 0.0f));
@@ -64,9 +83,11 @@ SceneCube::SceneCube()
 				Math::degreesToRadians(150),
 				Math::degreesToRadians(38)));
 
+	auto mi3 = mScene.addMeshInstance("Terrain", "Terrain", "Snow");
+
 	mScene.getAmbientLight().setState(mAmbientLightEnabled);
 	mScene.getDirectionalLight().setState(mDirectionalLightEnabled);
-	mScene.getDirectionalLight().setDirection(Vector3(1, 1, 1));
+	mScene.getDirectionalLight().setDirection(Vector3(1, -1, 1));
 	mScene.getDirectionalLight().setColor(Vector3(1, 0.8, 0.0));
 	mScene.getPointLight().setState(mPointLightEnabled);
 	mScene.getPointLight().setAttenuation(Vector3(0, 0, 3));

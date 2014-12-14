@@ -1,7 +1,10 @@
-CXX      = clang++
-CXXFLAGS = -std=c++11 -Wall -Werror $(shell sdl-config --cflags) -O2 -I.
-LDFLAGS  = $(shell sdl-config --libs) -lSDL_image -lSDL_ttf -lGL -lGLEW -lassimp
-AR       = ar
+CXX      ?= clang++
+
+CXXFLAGS ?= -O2 -g3 -Werror
+CXXFLAGS += -std=c++11 -Wall $(shell sdl-config --cflags) -I.
+
+LDFLAGS  += $(shell sdl-config --libs) -lSDL_image -lSDL_ttf -lGL -lGLEW -lassimp
+AR       ?= ar
 
 COMMONDIR = common
 COMMONSRCS = $(shell (find $(COMMONDIR) \( -name '*.cpp' -o -name '*.h' \)))
@@ -20,14 +23,14 @@ LIBSCENESHADERDIR = $(LIBSCENESRCDIR)/shaders
 LIBSCENESHADERSRCS = $(addprefix $(LIBSCENESHADERDIR)/, $(LIBSCENESHADERFILES))
 LIBSCENESHADERS = $(addsuffix .h, $(LIBSCENESHADERSRCS))
 
-default: $(LIBSCENELIB)
+default: all
 
 all: $(LIBSCENELIB) SceneCube
 
 $(COMMONLIB): $(COMMONSRCS)
 	make -C $(COMMONDIR)
 
-$(LIBSCENESHADERS): shader.sh
+$(LIBSCENESHADERS): shader.sh $(LIBSCENESHADERSRCS)
 	for file in $(LIBSCENESHADERS); do ./shader.sh $$file; done
 
 $(LIBSCENELIB): $(LIBSCENESHADERS) $(LIBSCENEOBJS)
@@ -41,12 +44,18 @@ $(TESTBINDIR):
 SceneCube: $(COMMONLIB) $(LIBSCENELIB) $(TESTBINDIR) tests/src/SceneCube.cpp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o tests/bin/SceneCube tests/src/SceneCube.cpp $(LIBSCENELIB) $(COMMONLIB)
 
+%.dep: %.cpp
+	@rm -f $@
+	@$(CXX) -MM $(CXXFLAGS) $< > $@.P
+	@sed 's,\($(notdir $*)\)\.o[ :]*,$(dir $*)\1.o $@ : ,g' < $@.P > $@
+	@rm -f $@.P
+
 clean:
 	rm -rf SceneCube
 	rm -rf common/*.a
 	rm -rf common/*.o
-	rm -rf src/*.o
-	rm -rf src/*.a
+	rm -rf sscene/*.o
+	rm -rf sscene/*.a
 	rm -rf $(LIBSCENESHADERDIR)/*.h
 	rm -rf $(LIBSCENELIB)
 	rm -rf tests/bin
