@@ -23,6 +23,8 @@ LIBSCENESHADERDIR = $(LIBSCENESRCDIR)/shaders
 LIBSCENESHADERSRCS = $(addprefix $(LIBSCENESHADERDIR)/, $(LIBSCENESHADERFILES))
 LIBSCENESHADERS = $(addsuffix .h, $(LIBSCENESHADERSRCS))
 
+INSTALLPREFIX ?= /usr/local
+
 default: all
 
 all: $(LIBSCENELIB) SceneCube
@@ -43,6 +45,12 @@ $(TESTBINDIR):
 
 SceneCube: $(COMMONLIB) $(LIBSCENELIB) $(TESTBINDIR) tests/src/SceneCube.cpp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o tests/bin/SceneCube tests/src/SceneCube.cpp $(LIBSCENELIB) $(COMMONLIB)
+
+install: $(LIBSCENELIB)
+	mkdir -p $(INSTALLPREFIX)/include/sscene
+	mkdir -p $(INSTALLPREFIX)/lib
+	cp -a $(LIBSCENESRCDIR)/*.h $(INSTALLPREFIX)/include/sscene
+	cp -a $(LIBSCENELIB) $(INSTALLPREFIX)/lib
 
 %.dep: %.cpp
 	@rm -f $@
