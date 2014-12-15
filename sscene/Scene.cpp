@@ -252,6 +252,21 @@ unsigned int Drawable::getNumVertices() const
 	return mNumVertices;
 }
 
+#define CHECK_GL_ERROR_IMPL(file, line) { \
+	do { \
+		while(1) { \
+			GLenum err = glGetError(); \
+			if(err == GL_NO_ERROR) { \
+				break; \
+			} \
+			fprintf(stderr, "%s:%d: GL error 0x%04x\n", file, line, err); \
+		} \
+	} while(0); \
+	}
+
+
+#define CHECK_GL_ERROR() { do { CHECK_GL_ERROR_IMPL(__FILE__, __LINE__); } while(0); }
+
 void Drawable::initBuffers(GLuint programObject, const Model& model)
 {
 	glGenBuffers(4, mVBOIDs);
@@ -299,6 +314,11 @@ Scene::Scene(float screenWidth, float screenHeight)
 		std::cerr << "OpenGL 2.1 not supported.\n";
 		throw std::runtime_error("Error initialising 3D");
 	}
+
+	printf("%-20s: %s\n", "GL vendor", glGetString(GL_VENDOR));
+	printf("%-20s: %s\n", "GL renderer", glGetString(GL_RENDERER));
+	printf("%-20s: %s\n", "GL version", glGetString(GL_VERSION));
+	printf("%-20s: %s\n", "GLSL version", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
 #ifdef USE_BAKED_IN_SHADERS
 	vshader = HelperFunctions::loadShader(GL_VERTEX_SHADER, scene_vert);
@@ -522,15 +542,7 @@ void Scene::render()
 			glDrawArrays(GL_TRIANGLES, 0, d.getNumVertices());
 		}
 
-		{
-			while(1) {
-				GLenum err = glGetError();
-				if(err == GL_NO_ERROR) {
-					break;
-				}
-				fprintf(stderr, "GL error 0x%04x\n", err);
-			}
-		}
+		CHECK_GL_ERROR();
 	}
 }
 
