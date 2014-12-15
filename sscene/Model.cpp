@@ -35,7 +35,7 @@ Model::Model(const std::string& filename)
 	std::cout << mesh->mNumVertices << " vertices.\n";
 	std::cout << mesh->mNumFaces << " faces.\n";
 
-	for(int i = 0; i < mesh->mNumVertices; i++) {
+	for(unsigned int i = 0; i < mesh->mNumVertices; i++) {
 		const aiVector3D& vertex = mesh->mVertices[i];
 		mVertexCoords.push_back(vertex.x);
 		mVertexCoords.push_back(vertex.y);
@@ -53,13 +53,13 @@ Model::Model(const std::string& filename)
 		}
 	}
 
-	for(int i = 0; i < mesh->mNumFaces; i++) {
+	for(unsigned int i = 0; i < mesh->mNumFaces; i++) {
 		const aiFace& face = mesh->mFaces[i];
 		if(face.mNumIndices != 3) {
 			std::cerr << "Warning: number of indices should be three.\n";
 			throw std::runtime_error("Error while loading model");
 		} else {
-			for(int j = 0; j < face.mNumIndices; j++) {
+			for(unsigned int j = 0; j < face.mNumIndices; j++) {
 				mIndices.push_back(face.mIndices[j]);
 			}
 		}
