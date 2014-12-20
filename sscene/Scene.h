@@ -89,6 +89,26 @@ class DirectionalLight : public Light {
 
 class Drawable;
 
+class Line {
+	public:
+		Line();
+		~Line();
+		GLuint getVertexBuffer() const;
+		GLuint getColorBuffer() const;
+		unsigned int getNumVertices() const;
+		void addSegment(const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color);
+
+		static const unsigned int VERTEX_POS_INDEX;
+		static const unsigned int COLOR_INDEX;
+
+	private:
+		std::vector<std::tuple<Common::Vector3, Common::Vector3, Common::Color>> mSegments;
+		GLuint mVBOIDs[2];
+};
+
+
+struct Shader;
+
 class Scene {
 	public:
 		Scene(float screenWidth, float screenHeight);
@@ -102,6 +122,7 @@ class Scene {
 		void addModel(const std::string& name, const std::string& filename);
 		void addModel(const std::string& name, const Model& model);
 		void addModelFromHeightmap(const std::string& name, const Heightmap& heightmap);
+		void addLine(const std::string& name, const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color);
 		void getModel(const std::string& name);
 		boost::shared_ptr<MeshInstance> addMeshInstance(const std::string& name,
 				const std::string& modelname,
@@ -112,13 +133,15 @@ class Scene {
 		void updateMVPMatrix(const MeshInstance& mi);
 		void updateFrameMatrices(const Camera& cam);
 		void bindAttributes();
+		GLuint loadShader(const Shader& s);
 		boost::shared_ptr<Common::Texture> getModelTexture(const std::string& mname) const;
 
 		float mScreenWidth;
 		float mScreenHeight;
 
-		GLuint mProgramObject;
-		std::map<const char*, GLint> mUniformLocationMap;
+		GLuint mSceneProgram;
+		GLuint mLineProgram;
+		std::map<GLuint, std::map<const char*, GLint>> mUniformLocationMap;
 
 		Camera mDefaultCamera;
 
@@ -137,6 +160,7 @@ class Scene {
 		std::map<std::string, boost::shared_ptr<Drawable>> mDrawables;
 		std::map<std::string, boost::shared_ptr<MeshInstance>> mMeshInstances;
 		std::map<std::string, boost::shared_ptr<Common::Texture>> mMeshInstanceTextures;
+		std::map<std::string, Line> mLines;
 };
 
 }

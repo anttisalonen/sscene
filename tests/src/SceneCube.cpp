@@ -15,6 +15,7 @@ class SceneCube : public Common::Driver {
 		virtual bool handleKeyDown(float frameTime, SDLKey key) override;
 		virtual bool handleKeyUp(float frameTime, SDLKey key) override;
 		virtual bool handleMouseMotion(float frameTime, const SDL_MouseMotionEvent& ev) override;
+		virtual bool handleMousePress(float frameTime, Uint8 button) override;
 		virtual bool prerenderUpdate(float frameTime) override;
 		virtual void drawFrame() override;
 
@@ -28,6 +29,7 @@ class SceneCube : public Common::Driver {
 		bool mDirectionalLightEnabled;
 		bool mPointLightEnabled;
 		std::map<SDLKey, std::function<void (float)>> mControls;
+		Common::Vector3 mOldLinePos;
 };
 
 class Heightmap : public Scene::Heightmap {
@@ -136,6 +138,17 @@ bool SceneCube::handleMouseMotion(float frameTime, const SDL_MouseMotionEvent& e
 	if(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(1)) {
 		handleMouseMove(ev.xrel, ev.yrel);
 	}
+	return false;
+}
+
+bool SceneCube::handleMousePress(float frameTime, Uint8 button)
+{
+	if(button == SDL_BUTTON_RIGHT) {
+		auto newpos = mCamera.getPosition();
+		mScene.addLine("red line", mOldLinePos, newpos, Common::Color::Red);
+		mOldLinePos = newpos;
+	}
+
 	return false;
 }
 

@@ -10,22 +10,105 @@
 using namespace Common;
 using namespace Scene;
 
-#define USE_BAKED_IN_SHADERS
-
 namespace Scene {
 
-#ifdef USE_BAKED_IN_SHADERS
 #include "shaders/scene.vert.h"
 #include "shaders/scene.frag.h"
-#endif
+#include "shaders/line.vert.h"
+#include "shaders/line.frag.h"
+
+#define CHECK_GL_ERROR_IMPL(file, line) { \
+	do { \
+		while(1) { \
+			GLenum err = glGetError(); \
+			if(err == GL_NO_ERROR) { \
+				break; \
+			} \
+			fprintf(stderr, "%s:%d: GL error 0x%04x\n", file, line, err); \
+		} \
+	} while(0); \
+	}
+
+#define CHECK_GL_ERROR() { do { CHECK_GL_ERROR_IMPL(__FILE__, __LINE__); } while(0); }
 
 const Vector3 WorldForward = Vector3(1, 0, 0);
 const Vector3 WorldUp      = Vector3(0, 1, 0);
 
-// must match Drawable::initBuffers()
-#define VERTEX_POS_INDEX 0
-#define TEXCOORD_INDEX 1
-#define NORMAL_INDEX 2
+
+struct attrib {
+	const char* name;
+	int elems;
+	const std::vector<GLfloat>& data;
+};
+
+void loadBufferData(const std::vector<attrib>& attribs, GLuint* vboids)
+{
+	int i = 0;
+	for(auto& a : attribs) {
+		glBindBuffer(GL_ARRAY_BUFFER, vboids[i]);
+		glBufferData(GL_ARRAY_BUFFER, a.data.size() * sizeof(GLfloat), &a.data[0], GL_STATIC_DRAW);
+		glVertexAttribPointer(i, a.elems, GL_FLOAT, GL_FALSE, 0, NULL);
+		i++;
+	}
+}
+
+const unsigned int Line::VERTEX_POS_INDEX = 0;
+const unsigned int Line::COLOR_INDEX = 1;
+
+Line::Line()
+{
+	glGenBuffers(2, mVBOIDs);
+}
+
+Line::~Line()
+{
+	if(mVBOIDs[0]) {
+		glDeleteBuffers(2, mVBOIDs);
+	}
+}
+
+void Line::addSegment(const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color)
+{
+	mSegments.push_back(std::make_tuple(start, end, color));
+
+	std::vector<GLfloat> vertices;
+	std::vector<GLfloat> colors;
+
+	for(const auto& t : mSegments) {
+		vertices.push_back(std::get<0>(t).x);
+		vertices.push_back(std::get<0>(t).y);
+		vertices.push_back(std::get<0>(t).z);
+		vertices.push_back(std::get<1>(t).x);
+		vertices.push_back(std::get<1>(t).y);
+		vertices.push_back(std::get<1>(t).z);
+		colors.push_back(std::get<2>(t).r / 255.0f);
+		colors.push_back(std::get<2>(t).g / 255.0f);
+		colors.push_back(std::get<2>(t).b / 255.0f);
+		colors.push_back(std::get<2>(t).r / 255.0f);
+		colors.push_back(std::get<2>(t).g / 255.0f);
+		colors.push_back(std::get<2>(t).b / 255.0f);
+	}
+
+	std::vector<attrib> attribs = { { "a_Position", 3, vertices },
+		{ "a_Color", 3, colors } };
+
+	loadBufferData(attribs, mVBOIDs);
+}
+
+GLuint Line::getVertexBuffer() const
+{
+	return mVBOIDs[0];
+}
+
+GLuint Line::getColorBuffer() const
+{
+	return mVBOIDs[1];
+}
+
+unsigned int Line::getNumVertices() const
+{
+	return mSegments.size() * 2;
+}
 
 Camera::Camera()
 	: mHRot(0.0f),
@@ -202,6 +285,10 @@ class Drawable {
 		unsigned int getNumIndices() const;
 		unsigned int getNumVertices() const;
 
+		static const unsigned int VERTEX_POS_INDEX;
+		static const unsigned int TEXCOORD_INDEX;
+		static const unsigned int NORMAL_INDEX;
+
 	private:
 		void initBuffers(GLuint programObject, const Model& model);
 
@@ -209,6 +296,10 @@ class Drawable {
 		unsigned int mNumIndices;
 		unsigned int mNumVertices;
 };
+
+const unsigned int Drawable::VERTEX_POS_INDEX = 0;
+const unsigned int Drawable::TEXCOORD_INDEX = 1;
+const unsigned int Drawable::NORMAL_INDEX = 2;
 
 Drawable::Drawable(GLuint programObject, const Model& model)
 {
@@ -252,46 +343,78 @@ unsigned int Drawable::getNumVertices() const
 	return mNumVertices;
 }
 
-#define CHECK_GL_ERROR_IMPL(file, line) { \
-	do { \
-		while(1) { \
-			GLenum err = glGetError(); \
-			if(err == GL_NO_ERROR) { \
-				break; \
-			} \
-			fprintf(stderr, "%s:%d: GL error 0x%04x\n", file, line, err); \
-		} \
-	} while(0); \
-	}
-
-
-#define CHECK_GL_ERROR() { do { CHECK_GL_ERROR_IMPL(__FILE__, __LINE__); } while(0); }
-
 void Drawable::initBuffers(GLuint programObject, const Model& model)
 {
 	glGenBuffers(4, mVBOIDs);
-	struct attrib {
-		const char* name;
-		int elems;
-		const std::vector<GLfloat>& data;
-	};
 
-
-	attrib attribs[] = { { "a_Position", 3, model.getVertexCoords() },
+	std::vector<attrib> attribs = { { "a_Position", 3, model.getVertexCoords() },
 		{ "a_Texcoord", 2, model.getTexCoords() },
 		{ "a_Normal", 3, model.getNormals() } };
 
-	int i = 0;
-	for(auto& a : attribs) {
-		glBindBuffer(GL_ARRAY_BUFFER, mVBOIDs[i]);
-		glBufferData(GL_ARRAY_BUFFER, a.data.size() * sizeof(GLfloat), &a.data[0], GL_STATIC_DRAW);
-		glVertexAttribPointer(i, a.elems, GL_FLOAT, GL_FALSE, 0, NULL);
-		i++;
-	}
+	loadBufferData(attribs, mVBOIDs);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mVBOIDs[3]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.getIndices().size() * sizeof(GLushort),
 			&model.getIndices()[0], GL_STATIC_DRAW);
+}
+
+struct Shader {
+	const char* vertexShader;
+	const char* fragmentShader;
+	std::vector<const char*> uniforms;
+	std::vector<std::pair<GLuint, const char*>> attribs;
+};
+
+GLuint Scene::loadShader(const Shader& s)
+{
+	GLuint vshader;
+	GLuint fshader;
+	GLint linked;
+	GLuint program;
+
+	vshader = HelperFunctions::loadShader(GL_VERTEX_SHADER, s.vertexShader);
+	fshader = HelperFunctions::loadShader(GL_FRAGMENT_SHADER, s.fragmentShader);
+
+	program = glCreateProgram();
+
+	if(program == 0) {
+		std::cerr << "Unable to create program.\n";
+		throw std::runtime_error("Error initialising 3D");
+	}
+
+	glAttachShader(program, vshader);
+	glAttachShader(program, fshader);
+
+	for(const auto& attr : s.attribs) {
+		glEnableVertexAttribArray(attr.first);
+		glBindAttribLocation(program, attr.first, attr.second);
+	}
+
+	glLinkProgram(program);
+
+	glGetProgramiv(program, GL_LINK_STATUS, &linked);
+
+	if(!linked) {
+		GLint infoLen = 0;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLen);
+		if(infoLen > 1) {
+			char* infoLog = new char[infoLen];
+			glGetProgramInfoLog(program, infoLen, NULL, infoLog);
+			std::cerr << "Error linking program: " << infoLog << "\n";
+			delete[] infoLog;
+		} else {
+			std::cerr << "Unknown error when linking program.\n";
+		}
+
+		glDeleteProgram(program);
+		throw std::runtime_error("Error initialising 3D");
+	}
+
+	for(auto& p : s.uniforms) {
+		mUniformLocationMap[program][p] = glGetUniformLocation(program, p);
+	}
+
+	return program;
 }
 
 Scene::Scene(float screenWidth, float screenHeight)
@@ -301,10 +424,6 @@ Scene::Scene(float screenWidth, float screenHeight)
 	mDirectionalLight(Vector3(1, 0, 0), Color::White, false),
 	mPointLight(Vector3(), Vector3(), Color::White, false)
 {
-	GLuint vshader;
-	GLuint fshader;
-	GLint linked;
-
 	GLenum glewerr = glewInit();
 	if (glewerr != GLEW_OK) {
 		std::cerr << "Unable to initialise GLEW.\n";
@@ -320,44 +439,44 @@ Scene::Scene(float screenWidth, float screenHeight)
 	printf("%-20s: %s\n", "GL version", glGetString(GL_VERSION));
 	printf("%-20s: %s\n", "GLSL version", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-#ifdef USE_BAKED_IN_SHADERS
-	vshader = HelperFunctions::loadShader(GL_VERTEX_SHADER, scene_vert);
-	fshader = HelperFunctions::loadShader(GL_FRAGMENT_SHADER, scene_frag);
-#else
-	vshader = HelperFunctions::loadShaderFromFile(GL_VERTEX_SHADER, "scene.vert");
-	fshader = HelperFunctions::loadShaderFromFile(GL_FRAGMENT_SHADER, "scene.frag");
-#endif
+	Shader scene;
+	scene.vertexShader = scene_vert;
+	scene.fragmentShader = scene_frag;
+	scene.uniforms = {
+		"u_MVP",
+		"u_inverseMVP",
+		"s_texture",
+		"u_ambientLight",
+		"u_directionalLightDirection",
+		"u_directionalLightColor",
+		"u_pointLightPosition",
+		"u_pointLightAttenuation",
+		"u_pointLightColor",
+		"u_ambientLightEnabled",
+		"u_directionalLightEnabled",
+		"u_pointLightEnabled"
+	};
 
-	mProgramObject = glCreateProgram();
+	scene.attribs = {
+		{ Drawable::VERTEX_POS_INDEX, "a_Position" },
+		{ Drawable::TEXCOORD_INDEX, "a_Texcoord" },
+		{ Drawable::NORMAL_INDEX, "a_Normal" }
+	};
 
-	if(mProgramObject == 0) {
-		std::cerr << "Unable to create program.\n";
-		throw std::runtime_error("Error initialising 3D");
-	}
+	mSceneProgram = loadShader(scene);
 
-	glAttachShader(mProgramObject, vshader);
-	glAttachShader(mProgramObject, fshader);
+	Shader line;
+	line.vertexShader = line_vert;
+	line.fragmentShader = line_frag;
+	line.uniforms = {
+		"u_MVP"
+	};
 
-	bindAttributes();
-	glLinkProgram(mProgramObject);
-
-	glGetProgramiv(mProgramObject, GL_LINK_STATUS, &linked);
-
-	if(!linked) {
-		GLint infoLen = 0;
-		glGetProgramiv(mProgramObject, GL_INFO_LOG_LENGTH, &infoLen);
-		if(infoLen > 1) {
-			char* infoLog = new char[infoLen];
-			glGetProgramInfoLog(mProgramObject, infoLen, NULL, infoLog);
-			std::cerr << "Error linking program: " << infoLog << "\n";
-			delete[] infoLog;
-		} else {
-			std::cerr << "Unknown error when linking program.\n";
-		}
-
-		glDeleteProgram(mProgramObject);
-		throw std::runtime_error("Error initialising 3D");
-	}
+	line.attribs = {
+		{ Line::VERTEX_POS_INDEX, "a_Position" },
+		{ Line::COLOR_INDEX, "a_Color" }
+	};
+	mLineProgram = loadShader(line);
 
 	HelperFunctions::enableDepthTest();
 	glEnable(GL_TEXTURE_2D);
@@ -365,29 +484,7 @@ Scene::Scene(float screenWidth, float screenHeight)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glViewport(0, 0, screenWidth, screenHeight);
 
-	glUseProgram(mProgramObject);
-
-	mUniformLocationMap["u_MVP"] = -1;
-	mUniformLocationMap["u_inverseMVP"] = -1;
-
-	mUniformLocationMap["s_texture"] = -1;
-
-	mUniformLocationMap["u_ambientLight"] = -1;
-
-	mUniformLocationMap["u_directionalLightDirection"] = -1;
-	mUniformLocationMap["u_directionalLightColor"] = -1;
-
-	mUniformLocationMap["u_pointLightPosition"] = -1;
-	mUniformLocationMap["u_pointLightAttenuation"] = -1;
-	mUniformLocationMap["u_pointLightColor"] = -1;
-
-	mUniformLocationMap["u_ambientLightEnabled"] = -1;
-	mUniformLocationMap["u_directionalLightEnabled"] = -1;
-	mUniformLocationMap["u_pointLightEnabled"] = -1;
-
-	for(auto& p : mUniformLocationMap) {
-		p.second = glGetUniformLocation(mProgramObject, p.first);
-	}
+	glUseProgram(mSceneProgram);
 
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
@@ -395,19 +492,12 @@ Scene::Scene(float screenWidth, float screenHeight)
 
 void Scene::bindAttributes()
 {
-	glEnableVertexAttribArray(VERTEX_POS_INDEX);
-	glBindAttribLocation(mProgramObject, VERTEX_POS_INDEX, "a_Position");
-	glEnableVertexAttribArray(TEXCOORD_INDEX);
-	glBindAttribLocation(mProgramObject, TEXCOORD_INDEX, "a_Texcoord");
-	glEnableVertexAttribArray(NORMAL_INDEX);
-	glBindAttribLocation(mProgramObject, NORMAL_INDEX, "a_Normal");
 }
 
 boost::shared_ptr<Common::Texture> Scene::getModelTexture(const std::string& mname) const
 {
 	auto it = mMeshInstanceTextures.find(mname);
 	if(it == mMeshInstanceTextures.end()) {
-		assert(0);
 		throw std::runtime_error("Couldn't find texture for model");
 	} else {
 		return it->second;
@@ -461,8 +551,8 @@ void Scene::updateMVPMatrix(const MeshInstance& mi)
 	auto mvp = mModelMatrix * mViewMatrix * mPerspectiveMatrix;
 	auto imvp = mInverseModelMatrix;
 
-	glUniformMatrix4fv(mUniformLocationMap["u_MVP"], 1, GL_FALSE, mvp.m);
-	glUniformMatrix4fv(mUniformLocationMap["u_inverseMVP"], 1, GL_FALSE, imvp.m);
+	glUniformMatrix4fv(mUniformLocationMap[mSceneProgram]["u_MVP"], 1, GL_FALSE, mvp.m);
+	glUniformMatrix4fv(mUniformLocationMap[mSceneProgram]["u_inverseMVP"], 1, GL_FALSE, imvp.m);
 }
 
 void Scene::updateFrameMatrices(const Camera& cam)
@@ -475,27 +565,28 @@ void Scene::updateFrameMatrices(const Camera& cam)
 
 void Scene::render()
 {
-	glUniform1i(mUniformLocationMap["u_ambientLightEnabled"], mAmbientLight.isOn());
-	glUniform1i(mUniformLocationMap["u_directionalLightEnabled"], mDirectionalLight.isOn());
-	glUniform1i(mUniformLocationMap["u_pointLightEnabled"], mPointLight.isOn());
+	glUseProgram(mSceneProgram);
+	glUniform1i(mUniformLocationMap[mSceneProgram]["u_ambientLightEnabled"], mAmbientLight.isOn());
+	glUniform1i(mUniformLocationMap[mSceneProgram]["u_directionalLightEnabled"], mDirectionalLight.isOn());
+	glUniform1i(mUniformLocationMap[mSceneProgram]["u_pointLightEnabled"], mPointLight.isOn());
 
 	updateFrameMatrices(mDefaultCamera);
 
 	if(mPointLight.isOn()) {
 		auto at = mPointLight.getAttenuation();
 		auto col = mPointLight.getColor();
-		glUniform3f(mUniformLocationMap["u_pointLightAttenuation"], at.x, at.y, at.z);
-		glUniform3f(mUniformLocationMap["u_pointLightColor"], col.x, col.y, col.z);
+		glUniform3f(mUniformLocationMap[mSceneProgram]["u_pointLightAttenuation"], at.x, at.y, at.z);
+		glUniform3f(mUniformLocationMap[mSceneProgram]["u_pointLightColor"], col.x, col.y, col.z);
 	}
 
 	if(mDirectionalLight.isOn()) {
 		auto col = mDirectionalLight.getColor();
-		glUniform3f(mUniformLocationMap["u_directionalLightColor"], col.x, col.y, col.z);
+		glUniform3f(mUniformLocationMap[mSceneProgram]["u_directionalLightColor"], col.x, col.y, col.z);
 	}
 
 	if(mAmbientLight.isOn()) {
 		auto col = mAmbientLight.getColor();
-		glUniform3f(mUniformLocationMap["u_ambientLight"], col.x, col.y, col.z);
+		glUniform3f(mUniformLocationMap[mSceneProgram]["u_ambientLight"], col.x, col.y, col.z);
 	}
 
 	for(const auto& mi : mMeshInstances) {
@@ -504,7 +595,7 @@ void Scene::render()
 		glBindTexture(GL_TEXTURE_2D, getModelTexture(mi.first)->getTexture());
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glUniform1i(mUniformLocationMap["s_texture"], 0);
+		glUniform1i(mUniformLocationMap[mSceneProgram]["s_texture"], 0);
 
 		updateMVPMatrix(*mi.second);
 
@@ -512,14 +603,14 @@ void Scene::render()
 			// inverse translation matrix
 			Vector3 plpos(mPointLight.getPosition());
 			Vector3 plposrel = mi.second->getPosition() - plpos;
-			glUniform3f(mUniformLocationMap["u_pointLightPosition"],
+			glUniform3f(mUniformLocationMap[mSceneProgram]["u_pointLightPosition"],
 					plposrel.x, plposrel.y, plposrel.z);
 		}
 
 		if(mDirectionalLight.isOn()) {
 			// inverse rotation matrix (normal matrix)
 			Vector3 dir = mDirectionalLight.getDirection();
-			glUniform3f(mUniformLocationMap["u_directionalLightDirection"], dir.x, dir.y, dir.z);
+			glUniform3f(mUniformLocationMap[mSceneProgram]["u_directionalLightDirection"], dir.x, dir.y, dir.z);
 		}
 
 		const auto& d = mi.second->getDrawable();
@@ -529,11 +620,11 @@ void Scene::render()
 		}
 
 		glBindBuffer(GL_ARRAY_BUFFER, d.getVertexBuffer());
-		glVertexAttribPointer(VERTEX_POS_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(Drawable::VERTEX_POS_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, d.getTexCoordBuffer());
-		glVertexAttribPointer(TEXCOORD_INDEX, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(Drawable::TEXCOORD_INDEX, 2, GL_FLOAT, GL_FALSE, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, d.getNormalBuffer());
-		glVertexAttribPointer(NORMAL_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(Drawable::NORMAL_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 		if(d.getNumIndices() != 0) {
 			glDrawElements(GL_TRIANGLES, d.getNumIndices(),
@@ -542,6 +633,18 @@ void Scene::render()
 			glDrawArrays(GL_TRIANGLES, 0, d.getNumVertices());
 		}
 
+		CHECK_GL_ERROR();
+	}
+
+	glUseProgram(mLineProgram);
+	auto mvp = mViewMatrix * mPerspectiveMatrix;
+	glUniformMatrix4fv(mUniformLocationMap[mSceneProgram]["u_MVP"], 1, GL_FALSE, mvp.m);
+	for(const auto& kv : mLines) {
+		glBindBuffer(GL_ARRAY_BUFFER, kv.second.getVertexBuffer());
+		glVertexAttribPointer(Line::VERTEX_POS_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, kv.second.getColorBuffer());
+		glVertexAttribPointer(Line::COLOR_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glDrawArrays(GL_LINES, 0, kv.second.getNumVertices());
 		CHECK_GL_ERROR();
 	}
 }
@@ -560,7 +663,7 @@ void Scene::addModel(const std::string& name, const Model& model)
 	if(mDrawables.find(name) != mDrawables.end()) {
 		throw std::runtime_error("Tried adding a model with an already existing name");
 	} else {
-		boost::shared_ptr<Drawable> d(new Drawable(mProgramObject, model));
+		boost::shared_ptr<Drawable> d(new Drawable(mSceneProgram, model));
 		std::cout << (d->getNumVertices()) << " vertices.\n";
 		std::cout << (d->getNumIndices() / 3) << " triangles.\n";
 		mDrawables.insert({name, d});
@@ -577,6 +680,11 @@ void Scene::addModelFromHeightmap(const std::string& name, const Heightmap& heig
 {
 	auto m = Model(heightmap);
 	addModel(name, m);
+}
+
+void Scene::addLine(const std::string& name, const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color)
+{
+	mLines[name].addSegment(start, end, color);
 }
 
 void Scene::getModel(const std::string& name)
