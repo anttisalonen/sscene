@@ -86,11 +86,15 @@ class Drawable;
 
 class MeshInstance : public Movable {
 	public:
-		MeshInstance(const Drawable& m);
+		MeshInstance(const Drawable& m, bool usebackfaceculling, bool useblending);
 		const Drawable& getDrawable() const;
+		bool useBlending() const;
+		bool useBackfaceCulling() const;
 
 	private:
 		const Drawable& mDrawable;
+		bool mBackfaceCulling;
+		bool mBlending;
 };
 
 }

@@ -485,9 +485,6 @@ Scene::Scene(float screenWidth, float screenHeight)
 	glViewport(0, 0, screenWidth, screenHeight);
 
 	glUseProgram(mSceneProgram);
-
-	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
 }
 
 void Scene::bindAttributes()
@@ -614,6 +611,20 @@ void Scene::render()
 		}
 
 		const auto& d = mi.second->getDrawable();
+		if(mi.second->useBlending()) {
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		} else {
+			glDisable(GL_BLEND);
+		}
+
+		if(mi.second->useBackfaceCulling()) {
+			glCullFace(GL_BACK);
+			glEnable(GL_CULL_FACE);
+		} else {
+			glDisable(GL_CULL_FACE);
+		}
+
 		const auto& ib = d.getIndexBuffer();
 		if(d.getNumIndices() != 0) {
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
@@ -696,7 +707,7 @@ void Scene::getModel(const std::string& name)
 }
 
 boost::shared_ptr<MeshInstance> Scene::addMeshInstance(const std::string& name,
-		const std::string& modelname, const std::string& texturename)
+		const std::string& modelname, const std::string& texturename, bool usebackfaceculling, bool useblending)
 {
 	if(mMeshInstances.find(name) != mMeshInstances.end()) {
 		throw std::runtime_error("Tried adding a mesh instance with an already existing name");
@@ -710,7 +721,7 @@ boost::shared_ptr<MeshInstance> Scene::addMeshInstance(const std::string& name,
 	if(textit == mTextures.end())
 		throw std::runtime_error("Tried getting a non-existing texture\n");
 
-	auto mi = boost::shared_ptr<MeshInstance>(new MeshInstance(*modelit->second));
+	auto mi = boost::shared_ptr<MeshInstance>(new MeshInstance(*modelit->second, usebackfaceculling, useblending));
 	mMeshInstances.insert({name, mi});
 
 	mMeshInstanceTextures.insert({name, textit->second});

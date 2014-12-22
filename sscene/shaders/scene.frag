@@ -19,6 +19,11 @@ void main()
     vec4 directionalLight;
     vec4 pointLight;
     float pointLightFactor;
+    vec4 texColor;
+
+    texColor = texture2D(s_texture, v_texCoord);
+    if(texColor.a < 0.5)
+        discard;
 
     light = vec4(0.0);
 
@@ -44,6 +49,6 @@ void main()
     }
 
     light = clamp(light, 0, 1);
-    gl_FragColor = texture2D(s_texture, v_texCoord) * light;
+    gl_FragColor = texColor * light;
 }
 

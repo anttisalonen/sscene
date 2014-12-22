@@ -126,7 +126,7 @@ class Scene {
 		void getModel(const std::string& name);
 		boost::shared_ptr<MeshInstance> addMeshInstance(const std::string& name,
 				const std::string& modelname,
-				const std::string& texturename);
+				const std::string& texturename, bool usebackfaceculling = true, bool useblending = false);
 
 	private:
 		void calculateModelMatrix(const MeshInstance& mi);

@@ -296,14 +296,26 @@ Common::Vector3 Movable::getUpVector() const
 }
 
 
-MeshInstance::MeshInstance(const Drawable& m)
-	: mDrawable(m)
+MeshInstance::MeshInstance(const Drawable& m, bool usebackfaceculling, bool useblending)
+	: mDrawable(m),
+	mBackfaceCulling(usebackfaceculling),
+	mBlending(useblending)
 {
 }
 
 const Drawable& MeshInstance::getDrawable() const
 {
 	return mDrawable;
+}
+
+bool MeshInstance::useBackfaceCulling() const
+{
+	return mBackfaceCulling;
+}
+
+bool MeshInstance::useBlending() const
+{
+	return mBlending;
 }
 
 }
