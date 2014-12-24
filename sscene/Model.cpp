@@ -208,33 +208,9 @@ void Movable::setRotation(const Matrix44& m)
 
 void Movable::setRotation(const Common::Quaternion& q)
 {
-	const float& x = q.x;
-	const float& y = q.y;
-	const float& z = q.z;
-	const float& w = q.w;
-
-	float Nq = w * w + x * x + y * y + z * z;
-	float s = Nq > 0.0f ? 2.0f / Nq : 0.0f;
-
-	float X = x * s;
-	float Y = y * s;
-	float Z = z * s;
-	float wX = w * X; float wY = w * Y; float wZ = w * Z;
-	float xX = x * X; float xY = x * Y; float xZ = x * Z;
-	float yY = y * Y; float yZ = y * Z;
-	float zZ = z * Z;
-
-	mRotation.m[0] = 1.0f - yY - zZ;
-	mRotation.m[1] = xY - wZ;
-	mRotation.m[2] = xZ + wY;
-
-	mRotation.m[4] = xY + wZ;
-	mRotation.m[5] = 1.0f - xX - zZ;
-	mRotation.m[6] = yZ - wX;
-
-	mRotation.m[8] = xZ - wY;
-	mRotation.m[9] = yZ + wX;
-	mRotation.m[10] = 1.0f - xX - yY;
+	float x, y, z;
+	q.toEuler(x, y, z);
+	setRotationFromEuler(Common::Vector3(x, y, z));
 }
 
 void Movable::setRotation(const Common::Vector3& axis, float angle)
