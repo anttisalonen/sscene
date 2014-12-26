@@ -18,7 +18,7 @@ LIBSCENEOBJS = $(LIBSCENESRCS:.cpp=.o)
 LIBSCENEDEPS = $(LIBSCENESRCS:.cpp=.dep)
 LIBSCENELIB = libsscene.a
 
-LIBSCENESHADERFILES = scene.vert scene.frag line.vert line.frag
+LIBSCENESHADERFILES = scene.vert scene.frag line.vert line.frag overlay.vert overlay.frag
 LIBSCENESHADERDIR = $(LIBSCENESRCDIR)/shaders
 LIBSCENESHADERSRCS = $(addprefix $(LIBSCENESHADERDIR)/, $(LIBSCENESHADERFILES))
 LIBSCENESHADERS = $(addsuffix .h, $(LIBSCENESHADERSRCS))

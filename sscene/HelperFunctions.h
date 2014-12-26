@@ -19,6 +19,7 @@ class HelperFunctions {
 		static Common::Matrix44 translationMatrix(const Common::Vector3& v);
 		static Common::Matrix44 rotationMatrixFromEuler(const Common::Vector3& v);
 		static Common::Matrix44 perspectiveMatrix(float fov, int screenwidth, int screenheight);
+		static Common::Matrix44 orthoMatrix(int screenwidth, int screenheight);
 		static Common::Matrix44 cameraRotationMatrix(const Common::Vector3& tgt, const Common::Vector3& up);
 
 		static Common::Matrix44 rotationMatrixFromAxisAngle(const Common::Vector3& axis, float angle);
@@ -30,6 +31,7 @@ class HelperFunctions {
 		static boost::shared_ptr<Common::Texture> loadTexture(const std::string& filename);
 
 		static void enableDepthTest();
+		static void disableDepthTest();
 };
 
 }

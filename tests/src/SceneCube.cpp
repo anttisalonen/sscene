@@ -28,6 +28,7 @@ class SceneCube : public Common::Driver {
 		bool mAmbientLightEnabled;
 		bool mDirectionalLightEnabled;
 		bool mPointLightEnabled;
+		bool mOverlayEnabled;
 		std::map<SDLKey, std::function<void (float)>> mControls;
 		Common::Vector3 mOldLinePos;
 };
@@ -56,7 +57,8 @@ SceneCube::SceneCube()
 	mRotStep(0.02f),
 	mAmbientLightEnabled(true),
 	mDirectionalLightEnabled(true),
-	mPointLightEnabled(true)
+	mPointLightEnabled(true),
+	mOverlayEnabled(false)
 {
 	mControls[SDLK_UP] = [&] (float p) { mCamera.setForwardMovement(p); };
 	mControls[SDLK_PAGEUP] = [&] (float p) { mCamera.setUpwardsMovement(p); };
@@ -72,6 +74,7 @@ SceneCube::SceneCube()
 
 	mScene.addModel("Cube", "share/textured-cube.obj");
 	mScene.addTexture("Snow", "share/snow.jpg");
+	mScene.addOverlay("Overlay", "share/overlay.png");
 
 	Heightmap hm;
 	mScene.addModelFromHeightmap("Terrain", hm);
@@ -118,6 +121,15 @@ bool SceneCube::handleKeyDown(float frameTime, SDLKey key)
 		} else if(key == SDLK_F3) {
 			mPointLightEnabled = !mPointLightEnabled;
 			mScene.getPointLight().setState(mPointLightEnabled);
+		} else if(key == SDLK_F4) {
+			mScene.setFOV(mScene.getFOV() - 10.0f);
+			std::cout << "FOV: " << mScene.getFOV() << "\n";
+		} else if(key == SDLK_F5) {
+			mScene.setFOV(mScene.getFOV() + 10.0f);
+			std::cout << "FOV: " << mScene.getFOV() << "\n";
+		} else if(key == SDLK_F6) {
+			mOverlayEnabled = !mOverlayEnabled;
+			mScene.setOverlayEnabled("Overlay", mOverlayEnabled);
 		}
 	}
 

@@ -106,6 +106,23 @@ class Line {
 		GLuint mVBOIDs[2];
 };
 
+class Overlay {
+	public:
+		Overlay(const std::string& filename, unsigned int screenwidth, unsigned int screenheight);
+		~Overlay();
+		GLuint getTexture() const;
+		GLuint getVertexBuffer() const;
+		GLuint getTexCoordBuffer() const;
+		void setEnabled(bool e) { mEnabled = e; }
+		bool isEnabled() const { return mEnabled; }
+		static const unsigned int VERTEX_POS_INDEX;
+		static const unsigned int TEXCOORD_INDEX;
+
+	private:
+		boost::shared_ptr<Common::Texture> mTexture;
+		GLuint mVBOIDs[2];
+		bool mEnabled;
+};
 
 struct Shader;
 
@@ -124,6 +141,10 @@ class Scene {
 		void addModelFromHeightmap(const std::string& name, const Heightmap& heightmap);
 		void addLine(const std::string& name, const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color);
 		void getModel(const std::string& name);
+		void setFOV(float angle);
+		float getFOV() const;
+		void addOverlay(const std::string& name, const std::string& filename);
+		void setOverlayEnabled(const std::string& name, bool enabled);
 		boost::shared_ptr<MeshInstance> addMeshInstance(const std::string& name,
 				const std::string& modelname,
 				const std::string& texturename, bool usebackfaceculling = true, bool useblending = false);
@@ -132,15 +153,16 @@ class Scene {
 		void calculateModelMatrix(const MeshInstance& mi);
 		void updateMVPMatrix(const MeshInstance& mi);
 		void updateFrameMatrices(const Camera& cam);
-		void bindAttributes();
 		GLuint loadShader(const Shader& s);
 		boost::shared_ptr<Common::Texture> getModelTexture(const std::string& mname) const;
+		Common::Matrix44 getOrthoMVP() const;
 
 		float mScreenWidth;
 		float mScreenHeight;
 
 		GLuint mSceneProgram;
 		GLuint mLineProgram;
+		GLuint mOverlayProgram;
 		std::map<GLuint, std::map<const char*, GLint>> mUniformLocationMap;
 
 		Camera mDefaultCamera;
@@ -161,6 +183,9 @@ class Scene {
 		std::map<std::string, boost::shared_ptr<MeshInstance>> mMeshInstances;
 		std::map<std::string, boost::shared_ptr<Common::Texture>> mMeshInstanceTextures;
 		std::map<std::string, Line> mLines;
+		std::map<std::string, boost::shared_ptr<Overlay>> mOverlays;
+
+		float mFOV;
 };
 
 }

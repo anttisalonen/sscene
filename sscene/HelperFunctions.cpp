@@ -28,6 +28,22 @@ Matrix44 HelperFunctions::perspectiveMatrix(float fov, int screenwidth, int scre
 	return pers;
 }
 
+Matrix44 HelperFunctions::orthoMatrix(int screenwidth, int screenheight)
+{
+	const float r = screenwidth / 2.0f;
+	const float t = screenheight / 2.0f;
+	const float f = 1.0;
+	const float n = -1.0;
+
+	Matrix44 ortho = Matrix44::Identity;
+	ortho.m[0 * 4 + 0] = 1.0f / r;
+	ortho.m[1 * 4 + 1] = 1.0f / t;
+	ortho.m[2 * 4 + 2] = -2.0f / (f - n);
+	ortho.m[3 * 4 + 2] = - (f + n) / (f - n);
+	ortho.m[3 * 4 + 3] = 1.0f;
+	return ortho;
+}
+
 Matrix44 HelperFunctions::cameraRotationMatrix(const Vector3& tgt, const Vector3& up)
 {
 	Vector3 n(tgt.negated().normalized());
@@ -95,6 +111,11 @@ void HelperFunctions::enableDepthTest()
 {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+}
+
+void HelperFunctions::disableDepthTest()
+{
+	glDisable(GL_DEPTH_TEST);
 }
 
 boost::shared_ptr<Texture> HelperFunctions::loadTexture(const std::string& filename)

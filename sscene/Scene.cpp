@@ -16,6 +16,8 @@ namespace Scene {
 #include "shaders/scene.frag.h"
 #include "shaders/line.vert.h"
 #include "shaders/line.frag.h"
+#include "shaders/overlay.vert.h"
+#include "shaders/overlay.frag.h"
 
 #define CHECK_GL_ERROR_IMPL(file, line) { \
 	do { \
@@ -108,6 +110,58 @@ GLuint Line::getColorBuffer() const
 unsigned int Line::getNumVertices() const
 {
 	return mSegments.size() * 2;
+}
+
+const unsigned int Overlay::VERTEX_POS_INDEX = 0;
+const unsigned int Overlay::TEXCOORD_INDEX = 1;
+Overlay::Overlay(const std::string& filename, unsigned int screenwidth, unsigned int screenheight)
+	: mEnabled(false)
+{
+	mTexture = HelperFunctions::loadTexture(filename);
+
+	float sw2 = screenwidth / 2.0f;
+	float sh2 = screenheight / 2.0f;
+
+	glGenBuffers(2, mVBOIDs);
+
+	std::vector<GLfloat> pos = {
+		 sw2,   sh2, 0.0f,
+		-sw2,   sh2, 0.0f,
+		-sw2,  -sh2, 0.0f,
+		 sw2,  -sh2, 0.0f
+	};
+
+	std::vector<GLfloat> tex = {
+		 1.0f,  0.0f,
+		 0.0f,  0.0f,
+		 0.0f,  1.0f,
+		 1.0f,  1.0f,
+	};
+
+	std::vector<attrib> attribs = { { "a_Position", 3, pos },
+	{ "a_texCoord", 2, tex } };
+
+	loadBufferData(attribs, mVBOIDs);
+}
+
+Overlay::~Overlay()
+{
+	glDeleteBuffers(2, mVBOIDs);
+}
+
+GLuint Overlay::getTexture() const
+{
+	return mTexture->getTexture();
+}
+
+GLuint Overlay::getVertexBuffer() const
+{
+	return mVBOIDs[0];
+}
+
+GLuint Overlay::getTexCoordBuffer() const
+{
+	return mVBOIDs[1];
 }
 
 Camera::Camera()
@@ -348,7 +402,7 @@ void Drawable::initBuffers(GLuint programObject, const Model& model)
 	glGenBuffers(4, mVBOIDs);
 
 	std::vector<attrib> attribs = { { "a_Position", 3, model.getVertexCoords() },
-		{ "a_Texcoord", 2, model.getTexCoords() },
+		{ "a_texCoord", 2, model.getTexCoords() },
 		{ "a_Normal", 3, model.getNormals() } };
 
 	loadBufferData(attribs, mVBOIDs);
@@ -422,7 +476,8 @@ Scene::Scene(float screenWidth, float screenHeight)
 	mScreenHeight(screenHeight),
 	mAmbientLight(Color::White, false),
 	mDirectionalLight(Vector3(1, 0, 0), Color::White, false),
-	mPointLight(Vector3(), Vector3(), Color::White, false)
+	mPointLight(Vector3(), Vector3(), Color::White, false),
+	mFOV(90.0f)
 {
 	GLenum glewerr = glewInit();
 	if (glewerr != GLEW_OK) {
@@ -459,7 +514,7 @@ Scene::Scene(float screenWidth, float screenHeight)
 
 	scene.attribs = {
 		{ Drawable::VERTEX_POS_INDEX, "a_Position" },
-		{ Drawable::TEXCOORD_INDEX, "a_Texcoord" },
+		{ Drawable::TEXCOORD_INDEX, "a_texCoord" },
 		{ Drawable::NORMAL_INDEX, "a_Normal" }
 	};
 
@@ -478,6 +533,22 @@ Scene::Scene(float screenWidth, float screenHeight)
 	};
 	mLineProgram = loadShader(line);
 
+	{
+		Shader overlay;
+		overlay.vertexShader = overlay_vert;
+		overlay.fragmentShader = overlay_frag;
+		overlay.uniforms = {
+			"u_MVP",
+			"s_texture"
+		};
+
+		overlay.attribs = {
+			{ Overlay::VERTEX_POS_INDEX, "a_Position" },
+			{ Overlay::TEXCOORD_INDEX, "a_texCoord" }
+		};
+		mOverlayProgram = loadShader(overlay);
+	}
+
 	HelperFunctions::enableDepthTest();
 	glEnable(GL_TEXTURE_2D);
 
@@ -485,10 +556,6 @@ Scene::Scene(float screenWidth, float screenHeight)
 	glViewport(0, 0, screenWidth, screenHeight);
 
 	glUseProgram(mSceneProgram);
-}
-
-void Scene::bindAttributes()
-{
 }
 
 boost::shared_ptr<Common::Texture> Scene::getModelTexture(const std::string& mname) const
@@ -554,10 +621,15 @@ void Scene::updateMVPMatrix(const MeshInstance& mi)
 
 void Scene::updateFrameMatrices(const Camera& cam)
 {
-	mPerspectiveMatrix = HelperFunctions::perspectiveMatrix(90.0f, mScreenWidth, mScreenHeight);
+	mPerspectiveMatrix = HelperFunctions::perspectiveMatrix(mFOV, mScreenWidth, mScreenHeight);
 	auto camrot = HelperFunctions::cameraRotationMatrix(cam.getTargetVector(), cam.getUpVector());
 	auto camtrans = HelperFunctions::translationMatrix(cam.getPosition().negated());
 	mViewMatrix = camtrans * camrot;
+}
+
+Common::Matrix44 Scene::getOrthoMVP() const
+{
+	return HelperFunctions::orthoMatrix(mScreenWidth, mScreenHeight);
 }
 
 void Scene::render()
@@ -630,6 +702,9 @@ void Scene::render()
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
 		}
 
+		glEnableVertexAttribArray(Drawable::VERTEX_POS_INDEX);
+		glEnableVertexAttribArray(Drawable::TEXCOORD_INDEX);
+		glEnableVertexAttribArray(Drawable::NORMAL_INDEX);
 		glBindBuffer(GL_ARRAY_BUFFER, d.getVertexBuffer());
 		glVertexAttribPointer(Drawable::VERTEX_POS_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, d.getTexCoordBuffer());
@@ -643,6 +718,9 @@ void Scene::render()
 		} else {
 			glDrawArrays(GL_TRIANGLES, 0, d.getNumVertices());
 		}
+		glDisableVertexAttribArray(Drawable::VERTEX_POS_INDEX);
+		glDisableVertexAttribArray(Drawable::TEXCOORD_INDEX);
+		glDisableVertexAttribArray(Drawable::NORMAL_INDEX);
 
 		CHECK_GL_ERROR();
 	}
@@ -651,12 +729,50 @@ void Scene::render()
 	auto mvp = mViewMatrix * mPerspectiveMatrix;
 	glUniformMatrix4fv(mUniformLocationMap[mSceneProgram]["u_MVP"], 1, GL_FALSE, mvp.m);
 	for(const auto& kv : mLines) {
+		glEnableVertexAttribArray(Line::VERTEX_POS_INDEX);
+		glEnableVertexAttribArray(Line::COLOR_INDEX);
 		glBindBuffer(GL_ARRAY_BUFFER, kv.second.getVertexBuffer());
 		glVertexAttribPointer(Line::VERTEX_POS_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, kv.second.getColorBuffer());
 		glVertexAttribPointer(Line::COLOR_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glDrawArrays(GL_LINES, 0, kv.second.getNumVertices());
+		glDisableVertexAttribArray(Line::VERTEX_POS_INDEX);
+		glDisableVertexAttribArray(Line::COLOR_INDEX);
 		CHECK_GL_ERROR();
+	}
+
+	if(!mOverlays.empty()) {
+		glUseProgram(mOverlayProgram);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		for(const auto& kv : mOverlays) {
+			if(!kv.second->isEnabled()) {
+				continue;
+			}
+
+			auto mvp = getOrthoMVP();
+			glUniformMatrix4fv(mUniformLocationMap[mOverlayProgram]["u_MVP"], 1, GL_FALSE, mvp.m);
+			glUniform1i(mUniformLocationMap[mOverlayProgram]["s_texture"], 0);
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, kv.second->getTexture());
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+			glEnableVertexAttribArray(Overlay::VERTEX_POS_INDEX);
+			glEnableVertexAttribArray(Overlay::TEXCOORD_INDEX);
+			glBindBuffer(GL_ARRAY_BUFFER, kv.second->getVertexBuffer());
+			glVertexAttribPointer(Overlay::VERTEX_POS_INDEX, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+			glBindBuffer(GL_ARRAY_BUFFER, kv.second->getTexCoordBuffer());
+			glVertexAttribPointer(Overlay::TEXCOORD_INDEX, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+			glDisableVertexAttribArray(Overlay::VERTEX_POS_INDEX);
+			glDisableVertexAttribArray(Overlay::TEXCOORD_INDEX);
+			CHECK_GL_ERROR();
+		}
 	}
 }
 
@@ -696,6 +812,36 @@ void Scene::addModelFromHeightmap(const std::string& name, const Heightmap& heig
 void Scene::addLine(const std::string& name, const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color)
 {
 	mLines[name].addSegment(start, end, color);
+}
+
+void Scene::setFOV(float angle)
+{
+	mFOV = angle;
+}
+
+float Scene::getFOV() const
+{
+	return mFOV;
+}
+
+void Scene::addOverlay(const std::string& name, const std::string& filename)
+{
+	if(mOverlays.find(name) != mOverlays.end()) {
+		throw std::runtime_error("Tried adding an already existing overlay");
+	} else {
+		auto ov = boost::shared_ptr<Overlay>(new Overlay(filename, mScreenWidth, mScreenHeight));
+		mOverlays.insert({name, ov});
+	}
+}
+
+void Scene::setOverlayEnabled(const std::string& name, bool enabled)
+{
+	auto it = mOverlays.find(name);
+	if(it == mOverlays.end()) {
+		throw std::runtime_error("Tried getting a non-existing model\n");
+	} else {
+		it->second->setEnabled(enabled);
+	}
 }
 
 void Scene::getModel(const std::string& name)
