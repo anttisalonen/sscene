@@ -97,6 +97,16 @@ void Line::addSegment(const Common::Vector3& start, const Common::Vector3& end, 
 	loadBufferData(attribs, mVBOIDs);
 }
 
+void Line::clear()
+{
+	mSegments.clear();
+}
+
+bool Line::isEmpty() const
+{
+	return mSegments.empty();
+}
+
 GLuint Line::getVertexBuffer() const
 {
 	return mVBOIDs[0];
@@ -729,6 +739,9 @@ void Scene::render()
 	auto mvp = mViewMatrix * mPerspectiveMatrix;
 	glUniformMatrix4fv(mUniformLocationMap[mSceneProgram]["u_MVP"], 1, GL_FALSE, mvp.m);
 	for(const auto& kv : mLines) {
+		if(kv.second.isEmpty())
+			continue;
+
 		glEnableVertexAttribArray(Line::VERTEX_POS_INDEX);
 		glEnableVertexAttribArray(Line::COLOR_INDEX);
 		glBindBuffer(GL_ARRAY_BUFFER, kv.second.getVertexBuffer());
@@ -812,6 +825,11 @@ void Scene::addModelFromHeightmap(const std::string& name, const Heightmap& heig
 void Scene::addLine(const std::string& name, const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color)
 {
 	mLines[name].addSegment(start, end, color);
+}
+
+void Scene::clearLine(const std::string& name)
+{
+	mLines[name].clear();
 }
 
 void Scene::setFOV(float angle)

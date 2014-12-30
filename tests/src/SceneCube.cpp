@@ -159,6 +159,8 @@ bool SceneCube::handleMousePress(float frameTime, Uint8 button)
 		auto newpos = mCamera.getPosition();
 		mScene.addLine("red line", mOldLinePos, newpos, Common::Color::Red);
 		mOldLinePos = newpos;
+	} else if(button == SDL_BUTTON_MIDDLE) {
+		mScene.clearLine("red line");
 	}
 
 	return false;

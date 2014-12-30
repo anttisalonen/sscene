@@ -97,6 +97,8 @@ class Line {
 		GLuint getColorBuffer() const;
 		unsigned int getNumVertices() const;
 		void addSegment(const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color);
+		void clear();
+		bool isEmpty() const;
 
 		static const unsigned int VERTEX_POS_INDEX;
 		static const unsigned int COLOR_INDEX;
@@ -140,6 +142,7 @@ class Scene {
 		void addModel(const std::string& name, const Model& model);
 		void addModelFromHeightmap(const std::string& name, const Heightmap& heightmap);
 		void addLine(const std::string& name, const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color);
+		void clearLine(const std::string& name);
 		void getModel(const std::string& name);
 		void setFOV(float angle);
 		float getFOV() const;
