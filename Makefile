@@ -27,7 +27,7 @@ INSTALLPREFIX ?= /usr/local
 
 default: all
 
-all: $(LIBSCENELIB) SceneCube
+all: $(LIBSCENELIB) tests/bin/SceneCube
 
 $(COMMONLIB): $(COMMONSRCS)
 	make -C $(COMMONDIR)
@@ -43,7 +43,7 @@ TESTBINDIR = tests/bin
 $(TESTBINDIR):
 	mkdir -p tests/bin
 
-SceneCube: $(COMMONLIB) $(LIBSCENELIB) $(TESTBINDIR) tests/src/SceneCube.cpp
+tests/bin/SceneCube: $(COMMONLIB) $(LIBSCENELIB) $(TESTBINDIR) tests/src/SceneCube.cpp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o tests/bin/SceneCube tests/src/SceneCube.cpp $(LIBSCENELIB) $(COMMONLIB)
 
 install: $(LIBSCENELIB)
@@ -59,7 +59,7 @@ install: $(LIBSCENELIB)
 	@rm -f $@.P
 
 clean:
-	rm -rf SceneCube
+	rm -rf tests/bin/SceneCube
 	rm -rf common/*.a
 	rm -rf common/*.o
 	rm -rf sscene/*.o
