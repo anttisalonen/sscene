@@ -168,11 +168,13 @@ const std::vector<GLfloat>& Model::getNormals() const
 }
 
 Movable::Movable()
+	: mScale(1.0f, 1.0f, 1.0f)
 {
 }
 
 Movable::Movable(const Common::Vector3& pos)
-	: mPosition(pos)
+	: mPosition(pos),
+	mScale(1.0f, 1.0f, 1.0f)
 {
 }
 
@@ -236,6 +238,18 @@ void Movable::setRotation(const Common::Vector3& forward, const Common::Vector3&
 	mRotation.m[9] = fw.y;
 	mRotation.m[10] = fw.z;
 
+}
+
+void Movable::setScale(float x, float y, float z)
+{
+	mScale.x = x;
+	mScale.y = y;
+	mScale.z = z;
+}
+
+const Common::Vector3& Movable::getScale() const
+{
+	return mScale;
 }
 
 void Movable::addRotation(const Common::Matrix44& m, bool local)

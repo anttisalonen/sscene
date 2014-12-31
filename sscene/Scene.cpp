@@ -607,7 +607,8 @@ void Scene::calculateModelMatrix(const MeshInstance& mi)
 {
 	auto translation = HelperFunctions::translationMatrix(mi.getPosition());
 	auto rotation = mi.getRotation();
-	mModelMatrix = rotation * translation;
+	auto scale = HelperFunctions::scaleMatrix(mi.getScale());
+	mModelMatrix = scale * rotation * translation;
 
 	auto invTranslation(translation);
 	invTranslation.m[3] = -invTranslation.m[3];
@@ -616,7 +617,12 @@ void Scene::calculateModelMatrix(const MeshInstance& mi)
 
 	auto invRotation = rotation.transposed();
 
-	mInverseModelMatrix = invTranslation * invRotation;
+	auto invScale = scale;
+	invScale.m[0] = 1.0f / invScale.m[0];
+	invScale.m[5] = 1.0f / invScale.m[5];
+	invScale.m[10] = 1.0f / invScale.m[10];
+
+	mInverseModelMatrix = invTranslation * invRotation * invScale;
 }
 
 void Scene::updateMVPMatrix(const MeshInstance& mi)

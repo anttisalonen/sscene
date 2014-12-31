@@ -81,9 +81,11 @@ SceneCube::SceneCube()
 
 	auto mi1 = mScene.addMeshInstance("Cube1", "Cube", "Snow");
 	mi1->setPosition(Vector3(-0.1, 0.0f, 0.0f));
+	mi1->setScale(2.0f, 0.6f, 1.0f);
 
 	auto mi2 = mScene.addMeshInstance("Cube2", "Cube", "Snow");
 	mi2->setPosition(Vector3(3.0f, 3.0f, 0.0f));
+	mi2->setScale(2.0f, 0.6f, 1.0f);
 	mi2->setRotationFromEuler(Vector3(Math::degreesToRadians(149),
 				Math::degreesToRadians(150),
 				Math::degreesToRadians(38)));

@@ -144,6 +144,15 @@ Matrix44 HelperFunctions::translationMatrix(const Vector3& v)
 	return translation;
 }
 
+Matrix44 HelperFunctions::scaleMatrix(const Vector3& v)
+{
+	Matrix44 scale = Matrix44::Identity;
+	scale.m[0 * 4 + 0] = v.x;
+	scale.m[1 * 4 + 1] = v.y;
+	scale.m[2 * 4 + 2] = v.z;
+	return scale;
+}
+
 Matrix44 HelperFunctions::rotationMatrixFromEuler(const Vector3& v)
 {
 	Matrix44 rotation = Matrix44::Identity;

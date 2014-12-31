@@ -17,6 +17,7 @@ namespace Scene {
 class HelperFunctions {
 	public:
 		static Common::Matrix44 translationMatrix(const Common::Vector3& v);
+		static Common::Matrix44 scaleMatrix(const Common::Vector3& v);
 		static Common::Matrix44 rotationMatrixFromEuler(const Common::Vector3& v);
 		static Common::Matrix44 perspectiveMatrix(float fov, int screenwidth, int screenheight);
 		static Common::Matrix44 orthoMatrix(int screenwidth, int screenheight);

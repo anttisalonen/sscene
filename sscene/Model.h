@@ -77,9 +77,13 @@ class Movable {
 		Common::Vector3 getTargetVector() const;
 		Common::Vector3 getUpVector() const;
 
+		void setScale(float x, float y, float z);
+		const Common::Vector3& getScale() const;
+
 	protected:
 		Common::Vector3 mPosition;
 		Common::Matrix44 mRotation;
+		Common::Vector3 mScale;
 };
 
 class Drawable;
