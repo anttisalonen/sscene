@@ -824,13 +824,42 @@ void Scene::addModel(const std::string& name, const std::string& filename)
 
 void Scene::addModelFromHeightmap(const std::string& name, const Heightmap& heightmap)
 {
-	auto m = Model(heightmap);
+	auto m = Model(heightmap, 1.0f, 1.0f);
 	addModel(name, m);
 }
 
 void Scene::addLine(const std::string& name, const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color)
 {
 	mLines[name].addSegment(start, end, color);
+}
+
+class PlaneHeightmap : public Heightmap {
+	public:
+		PlaneHeightmap(unsigned int segments)
+			: mSegments(segments) { }
+		virtual float getHeightAt(float x, float y) const
+		{
+			return 0.0f;
+		}
+		virtual unsigned int getWidth() const
+		{
+			return mSegments;
+		}
+		virtual float getXZScale() const
+		{
+			return 1.0f / static_cast<float>(mSegments);
+		}
+
+	private:
+		unsigned int mSegments;
+};
+
+void Scene::addPlane(const std::string& name, float uscale, float vscale, unsigned int segments)
+{
+	PlaneHeightmap heightmap(segments);
+
+	auto m = Model(heightmap, uscale, vscale);
+	addModel(name, m);
 }
 
 void Scene::clearLine(const std::string& name)
@@ -866,6 +895,11 @@ void Scene::setOverlayEnabled(const std::string& name, bool enabled)
 	} else {
 		it->second->setEnabled(enabled);
 	}
+}
+
+void Scene::setWireframe(bool w)
+{
+	glPolygonMode(GL_FRONT_AND_BACK, w ? GL_LINE : GL_FILL);
 }
 
 void Scene::getModel(const std::string& name)

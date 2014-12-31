@@ -141,6 +141,7 @@ class Scene {
 		void addModel(const std::string& name, const std::string& filename);
 		void addModel(const std::string& name, const Model& model);
 		void addModelFromHeightmap(const std::string& name, const Heightmap& heightmap);
+		void addPlane(const std::string& name, float uscale, float vscale, unsigned int segments);
 		void addLine(const std::string& name, const Common::Vector3& start, const Common::Vector3& end, const Common::Color& color);
 		void clearLine(const std::string& name);
 		void getModel(const std::string& name);
@@ -148,6 +149,7 @@ class Scene {
 		float getFOV() const;
 		void addOverlay(const std::string& name, const std::string& filename);
 		void setOverlayEnabled(const std::string& name, bool enabled);
+		void setWireframe(bool w);
 		boost::shared_ptr<MeshInstance> addMeshInstance(const std::string& name,
 				const std::string& modelname,
 				const std::string& texturename, bool usebackfaceculling = true, bool useblending = false);

@@ -70,15 +70,16 @@ Model::Model()
 {
 }
 
-Model::Model(const Heightmap& heightmap)
+Model::Model(const Heightmap& heightmap, float uscale, float vscale)
 {
-	int w = heightmap.getWidth();
+	unsigned int w = heightmap.getWidth() + 1;
+	float xzscale = heightmap.getXZScale();
 
-	int whalf = w / 2;
+	float whalf = (w - 1) / 2.0f;
 	for(int j = 0; j < w; j++) {
 		for(int i = 0; i < w; i++) {
-			addVertex(Vector3(i - whalf, heightmap.getHeightAt(i, j), j - whalf));
-			addTexCoord(i / (float)w, j / (float)w);
+			addVertex(Vector3(xzscale * (i - whalf), heightmap.getHeightAt(i, j), xzscale * (j - whalf)));
+			addTexCoord(uscale * i / (float)w, vscale * j / (float)w);
 			Vector3 p1(i,
 					heightmap.getHeightAt(i, j),
 					j);

@@ -20,14 +20,15 @@ class Heightmap {
 	public:
 		virtual ~Heightmap() { }
 		virtual float getHeightAt(float x, float y) const = 0;
-		virtual float getWidth() const = 0;
+		virtual unsigned int getWidth() const = 0;
+		virtual float getXZScale() const = 0;
 };
 
 class Model {
 	public:
 		Model();
 		Model(const std::string& filename);
-		Model(const Heightmap& heightmap);
+		Model(const Heightmap& heightmap, float uscale, float vscale);
 
 	private:
 		friend class Drawable;

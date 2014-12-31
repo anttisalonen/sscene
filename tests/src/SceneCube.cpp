@@ -29,6 +29,7 @@ class SceneCube : public Common::Driver {
 		bool mDirectionalLightEnabled;
 		bool mPointLightEnabled;
 		bool mOverlayEnabled;
+		bool mWireframe;
 		std::map<SDLKey, std::function<void (float)>> mControls;
 		Common::Vector3 mOldLinePos;
 };
@@ -36,7 +37,8 @@ class SceneCube : public Common::Driver {
 class Heightmap : public Scene::Heightmap {
 	public:
 		virtual float getHeightAt(float x, float y) const;
-		virtual float getWidth() const;
+		virtual unsigned int getWidth() const;
+		virtual float getXZScale() const;
 };
 
 float Heightmap::getHeightAt(float x, float y) const
@@ -44,9 +46,14 @@ float Heightmap::getHeightAt(float x, float y) const
 	return 3.0f * sin(x * 0.20f) + 5.0f * cos(y * 0.10f) - 8.0f;
 }
 
-float Heightmap::getWidth() const
+unsigned int Heightmap::getWidth() const
 {
 	return 128;
+}
+
+float Heightmap::getXZScale() const
+{
+	return 1.0f;
 }
 
 SceneCube::SceneCube()
@@ -58,7 +65,8 @@ SceneCube::SceneCube()
 	mAmbientLightEnabled(true),
 	mDirectionalLightEnabled(true),
 	mPointLightEnabled(true),
-	mOverlayEnabled(false)
+	mOverlayEnabled(false),
+	mWireframe(false)
 {
 	mControls[SDLK_UP] = [&] (float p) { mCamera.setForwardMovement(p); };
 	mControls[SDLK_PAGEUP] = [&] (float p) { mCamera.setUpwardsMovement(p); };
@@ -80,8 +88,6 @@ SceneCube::SceneCube()
 	mScene.addModelFromHeightmap("Terrain", hm);
 
 	auto mi1 = mScene.addMeshInstance("Cube1", "Cube", "Snow");
-	mi1->setPosition(Vector3(-0.1, 0.0f, 0.0f));
-	mi1->setScale(2.0f, 0.6f, 1.0f);
 
 	auto mi2 = mScene.addMeshInstance("Cube2", "Cube", "Snow");
 	mi2->setPosition(Vector3(3.0f, 3.0f, 0.0f));
@@ -91,6 +97,10 @@ SceneCube::SceneCube()
 				Math::degreesToRadians(38)));
 
 	auto mi3 = mScene.addMeshInstance("Terrain", "Terrain", "Snow");
+
+	mScene.addPlane("Plane", 1.0f, 1.0f, 1);
+	auto mi4 = mScene.addMeshInstance("Plane", "Plane", "Snow");
+	mi4->setScale(4.0f, 1.0f, 4.0f);
 
 	mScene.getAmbientLight().setState(mAmbientLightEnabled);
 	mScene.getDirectionalLight().setState(mDirectionalLightEnabled);
@@ -132,6 +142,9 @@ bool SceneCube::handleKeyDown(float frameTime, SDLKey key)
 		} else if(key == SDLK_F6) {
 			mOverlayEnabled = !mOverlayEnabled;
 			mScene.setOverlayEnabled("Overlay", mOverlayEnabled);
+		} else if(key == SDLK_F7) {
+			mWireframe = !mWireframe;
+			mScene.setWireframe(mWireframe);
 		}
 	}
 
