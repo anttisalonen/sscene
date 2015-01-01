@@ -19,8 +19,11 @@ namespace Scene {
 class Heightmap {
 	public:
 		virtual ~Heightmap() { }
+		// will be called getWidth()^2 times at getXZScale() intervals
 		virtual float getHeightAt(float x, float y) const = 0;
+		// number of tiles to create (for both x- and y axes)
 		virtual unsigned int getWidth() const = 0;
+		// size per tile
 		virtual float getXZScale() const = 0;
 };
 

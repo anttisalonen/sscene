@@ -53,7 +53,7 @@ unsigned int Heightmap::getWidth() const
 
 float Heightmap::getXZScale() const
 {
-	return 1.0f;
+	return 2.0f;
 }
 
 SceneCube::SceneCube()

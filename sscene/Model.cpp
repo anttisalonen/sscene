@@ -75,20 +75,21 @@ Model::Model(const Heightmap& heightmap, float uscale, float vscale)
 	unsigned int w = heightmap.getWidth() + 1;
 	float xzscale = heightmap.getXZScale();
 
-	float whalf = (w - 1) / 2.0f;
 	for(int j = 0; j < w; j++) {
 		for(int i = 0; i < w; i++) {
-			addVertex(Vector3(xzscale * (i - whalf), heightmap.getHeightAt(i, j), xzscale * (j - whalf)));
+			float xp = xzscale * i;
+			float yp = xzscale * j;
+			addVertex(Vector3(xp, heightmap.getHeightAt(xp, yp), yp));
 			addTexCoord(uscale * i / (float)w, vscale * j / (float)w);
-			Vector3 p1(i,
-					heightmap.getHeightAt(i, j),
-					j);
-			Vector3 p2(i + 1,
-					heightmap.getHeightAt(i + 1, j),
-					j);
-			Vector3 p3(i,
-					heightmap.getHeightAt(i, j + 1),
-					j + 1);
+			Vector3 p1(xp,
+					heightmap.getHeightAt(xp, yp),
+					yp);
+			Vector3 p2(xp + xzscale,
+					heightmap.getHeightAt(xp + xzscale, yp),
+					yp);
+			Vector3 p3(xp,
+					heightmap.getHeightAt(xp, yp + xzscale),
+					yp + xzscale);
 			Vector3 u(p2 - p1);
 			Vector3 v(p3 - p1);
 			addNormal(v.cross(u).normalized());
