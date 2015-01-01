@@ -487,7 +487,9 @@ Scene::Scene(float screenWidth, float screenHeight)
 	mAmbientLight(Color::White, false),
 	mDirectionalLight(Vector3(1, 0, 0), Color::White, false),
 	mPointLight(Vector3(), Vector3(), Color::White, false),
-	mFOV(90.0f)
+	mFOV(90.0f),
+	mZFar(200.0f),
+	mClearColor(0, 0, 0)
 {
 	GLenum glewerr = glewInit();
 	if (glewerr != GLEW_OK) {
@@ -562,7 +564,6 @@ Scene::Scene(float screenWidth, float screenHeight)
 	HelperFunctions::enableDepthTest();
 	glEnable(GL_TEXTURE_2D);
 
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glViewport(0, 0, screenWidth, screenHeight);
 
 	glUseProgram(mSceneProgram);
@@ -637,7 +638,7 @@ void Scene::updateMVPMatrix(const MeshInstance& mi)
 
 void Scene::updateFrameMatrices(const Camera& cam)
 {
-	mPerspectiveMatrix = HelperFunctions::perspectiveMatrix(mFOV, mScreenWidth, mScreenHeight);
+	mPerspectiveMatrix = HelperFunctions::perspectiveMatrix(mFOV, mScreenWidth, mScreenHeight, mZFar);
 	auto camrot = HelperFunctions::cameraRotationMatrix(cam.getTargetVector(), cam.getUpVector());
 	auto camtrans = HelperFunctions::translationMatrix(cam.getPosition().negated());
 	mViewMatrix = camtrans * camrot;
@@ -650,6 +651,8 @@ Common::Matrix44 Scene::getOrthoMVP() const
 
 void Scene::render()
 {
+	glClearColor(mClearColor.r / 256.0f, mClearColor.g / 256.0f, mClearColor.b / 256.0f, 1.0f);
+
 	glUseProgram(mSceneProgram);
 	glUniform1i(mUniformLocationMap[mSceneProgram]["u_ambientLightEnabled"], mAmbientLight.isOn());
 	glUniform1i(mUniformLocationMap[mSceneProgram]["u_directionalLightEnabled"], mDirectionalLight.isOn());
@@ -875,6 +878,21 @@ void Scene::setFOV(float angle)
 float Scene::getFOV() const
 {
 	return mFOV;
+}
+
+void Scene::setZFar(float zfar)
+{
+	mZFar = zfar;
+}
+
+float Scene::getZFar() const
+{
+	return mZFar;
+}
+
+void Scene::setClearColor(const Common::Color& color)
+{
+	mClearColor = color;
 }
 
 void Scene::addOverlay(const std::string& name, const std::string& filename)

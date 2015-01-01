@@ -10,11 +10,10 @@ using namespace Scene;
 
 namespace Scene {
 
-Matrix44 HelperFunctions::perspectiveMatrix(float fov, int screenwidth, int screenheight)
+Matrix44 HelperFunctions::perspectiveMatrix(float fov, int screenwidth, int screenheight, float zfar)
 {
 	const float aspect_ratio = screenwidth / screenheight;
 	const float znear = 0.1f;
-	const float zfar = 200.0f;
 	const float h = 1.0 / tan(Math::degreesToRadians(fov * 0.5f));
 	const float neg_depth = znear - zfar;
 

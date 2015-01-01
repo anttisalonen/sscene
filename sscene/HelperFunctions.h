@@ -19,7 +19,7 @@ class HelperFunctions {
 		static Common::Matrix44 translationMatrix(const Common::Vector3& v);
 		static Common::Matrix44 scaleMatrix(const Common::Vector3& v);
 		static Common::Matrix44 rotationMatrixFromEuler(const Common::Vector3& v);
-		static Common::Matrix44 perspectiveMatrix(float fov, int screenwidth, int screenheight);
+		static Common::Matrix44 perspectiveMatrix(float fov, int screenwidth, int screenheight, float zfar);
 		static Common::Matrix44 orthoMatrix(int screenwidth, int screenheight);
 		static Common::Matrix44 cameraRotationMatrix(const Common::Vector3& tgt, const Common::Vector3& up);
 

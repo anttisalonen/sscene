@@ -147,6 +147,9 @@ class Scene {
 		void getModel(const std::string& name);
 		void setFOV(float angle);
 		float getFOV() const;
+		void setZFar(float angle);
+		float getZFar() const;
+		void setClearColor(const Common::Color& color);
 		void addOverlay(const std::string& name, const std::string& filename);
 		void setOverlayEnabled(const std::string& name, bool enabled);
 		void setWireframe(bool w);
@@ -191,6 +194,8 @@ class Scene {
 		std::map<std::string, boost::shared_ptr<Overlay>> mOverlays;
 
 		float mFOV;
+		float mZFar;
+		Common::Color mClearColor;
 };
 
 }
