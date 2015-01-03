@@ -10,6 +10,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "common/Vector2.h"
 #include "common/Vector3.h"
 #include "common/Matrix44.h"
 #include "common/Quaternion.h"
@@ -32,6 +33,10 @@ class Model {
 		Model();
 		Model(const std::string& filename);
 		Model(const Heightmap& heightmap, float uscale, float vscale);
+		Model(const std::vector<Common::Vector3>& vertexcoords,
+				const std::vector<Common::Vector2>& texcoords,
+				const std::vector<unsigned int>& indices,
+				const std::vector<Common::Vector3>& normals);
 
 	private:
 		friend class Drawable;

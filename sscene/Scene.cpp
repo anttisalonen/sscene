@@ -865,6 +865,15 @@ void Scene::addPlane(const std::string& name, float uscale, float vscale, unsign
 	addModel(name, m);
 }
 
+void Scene::addModel(const std::string& name, const std::vector<Common::Vector3>& vertexcoords,
+				const std::vector<Common::Vector2>& texcoords,
+				const std::vector<unsigned int>& indices,
+				const std::vector<Common::Vector3>& normals)
+{
+	auto m = Model(vertexcoords, texcoords, indices, normals);
+	addModel(name, m);
+}
+
 void Scene::clearLine(const std::string& name)
 {
 	mLines[name].clear();

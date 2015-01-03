@@ -106,6 +106,21 @@ Model::Model(const Heightmap& heightmap, float uscale, float vscale)
 	}
 }
 
+Model::Model(const std::vector<Common::Vector3>& vertexcoords,
+		const std::vector<Common::Vector2>& texcoords,
+		const std::vector<unsigned int>& indices,
+		const std::vector<Common::Vector3>& normals)
+{
+	for(auto v : vertexcoords)
+		addVertex(v);
+	for(auto v : texcoords)
+		addTexCoord(v.x, v.y);
+	for(auto v : indices)
+		addIndex(v);
+	for(auto v : normals)
+		addNormal(v);
+}
+
 void Model::addVertex(const Common::Vector3& v)
 {
 	mVertexCoords.push_back(v.x);

@@ -102,6 +102,31 @@ SceneCube::SceneCube()
 	auto mi4 = mScene.addMeshInstance("Plane", "Plane", "Snow");
 	mi4->setScale(4.0f, 1.0f, 4.0f);
 
+	{
+		std::vector<Common::Vector3> vertices = {
+			Common::Vector3(0.0f, 0.0f, 0.0f),
+			Common::Vector3(0.0f, 5.0f, 0.0f),
+			Common::Vector3(0.0f, 0.0f, 5.0f),
+		};
+		std::vector<Common::Vector2> texcoords = {
+			Common::Vector2(0.0f, 0.0f),
+			Common::Vector2(0.0f, 1.0f),
+			Common::Vector2(1.0f, 0.0f),
+		};
+		std::vector<unsigned int> indices = {
+			0, 1, 2
+		};
+		std::vector<Common::Vector3> normals = {
+			Common::Vector3(1.0f, 0.0f, 0.0f),
+			Common::Vector3(1.0f, 0.0f, 0.0f),
+			Common::Vector3(1.0f, 0.0f, 0.0f),
+		};
+
+		mScene.addModel("Manual", vertices, texcoords, indices, normals);
+		auto miManual = mScene.addMeshInstance("Manual", "Manual", "Snow");
+		miManual->setPosition(Common::Vector3(10.0f, 10.0f, 10.0f));
+	}
+
 	mScene.getAmbientLight().setState(mAmbientLightEnabled);
 	mScene.getDirectionalLight().setState(mDirectionalLightEnabled);
 	mScene.getDirectionalLight().setDirection(Vector3(1, -1, 1));

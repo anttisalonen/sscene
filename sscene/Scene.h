@@ -140,6 +140,10 @@ class Scene {
 		void addTexture(const std::string& name, const std::string& filename);
 		void addModel(const std::string& name, const std::string& filename);
 		void addModel(const std::string& name, const Model& model);
+		void addModel(const std::string& name, const std::vector<Common::Vector3>& vertexcoords,
+				const std::vector<Common::Vector2>& texcoords,
+				const std::vector<unsigned int>& indices,
+				const std::vector<Common::Vector3>& normals);
 		// resulting model will span from (0, 0) to (width * xzscale, width * xzscale)
 		void addModelFromHeightmap(const std::string& name, const Heightmap& heightmap);
 		void addPlane(const std::string& name, float uscale, float vscale, unsigned int segments);
