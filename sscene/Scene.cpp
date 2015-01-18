@@ -125,20 +125,32 @@ unsigned int Line::getNumVertices() const
 const unsigned int Overlay::VERTEX_POS_INDEX = 0;
 const unsigned int Overlay::TEXCOORD_INDEX = 1;
 Overlay::Overlay(const std::string& filename, unsigned int screenwidth, unsigned int screenheight)
-	: mEnabled(false)
+	: mEnabled(false),
+	mW(screenwidth),
+	mH(screenheight)
 {
 	mTexture = HelperFunctions::loadTexture(filename);
+	init();
+}
 
-	float sw2 = screenwidth / 2.0f;
-	float sh2 = screenheight / 2.0f;
+Overlay::Overlay(boost::shared_ptr<Common::Texture> texture, unsigned int screenwidth, unsigned int screenheight)
+	: mTexture(texture),
+	mEnabled(false),
+	mW(screenwidth),
+	mH(screenheight)
+{
+	init();
+}
 
+void Overlay::init()
+{
 	glGenBuffers(2, mVBOIDs);
 
 	std::vector<GLfloat> pos = {
-		 sw2,   sh2, 0.0f,
-		-sw2,   sh2, 0.0f,
-		-sw2,  -sh2, 0.0f,
-		 sw2,  -sh2, 0.0f
+		 1.0f,   1.0f, 0.0f,
+		 0.0f,   1.0f, 0.0f,
+		 0.0f,   0.0f, 0.0f,
+		 1.0f,   0.0f, 0.0f
 	};
 
 	std::vector<GLfloat> tex = {
@@ -173,6 +185,40 @@ GLuint Overlay::getTexCoordBuffer() const
 {
 	return mVBOIDs[1];
 }
+
+void Overlay::setPosition(unsigned int x, unsigned int y, unsigned int w, unsigned int h)
+{
+	mX = x;
+	mY = y;
+	mW = w;
+	mH = h;
+}
+
+void Overlay::setTexture(boost::shared_ptr<Common::Texture> texture)
+{
+	mTexture = texture;
+}
+
+unsigned int Overlay::getX() const
+{
+	return mX;
+}
+
+unsigned int Overlay::getY() const
+{
+	return mY;
+}
+
+unsigned int Overlay::getW() const
+{
+	return mW;
+}
+
+unsigned int Overlay::getH() const
+{
+	return mH;
+}
+
 
 Camera::Camera()
 	: mHRot(0.0f),
@@ -644,9 +690,12 @@ void Scene::updateFrameMatrices(const Camera& cam)
 	mViewMatrix = camtrans * camrot;
 }
 
-Common::Matrix44 Scene::getOrthoMVP() const
+Common::Matrix44 Scene::getOrthoMVP(const Overlay& ov) const
 {
-	return HelperFunctions::orthoMatrix(mScreenWidth, mScreenHeight);
+	return HelperFunctions::scaleMatrix(Common::Vector3(ov.getW(), ov.getH(), 1.0f)) *
+			HelperFunctions::translationMatrix(Common::Vector3(ov.getX() - mScreenWidth * 0.5f,
+						ov.getY() - mScreenHeight * 0.5f, 0.0f)) *
+			HelperFunctions::orthoMatrix(mScreenWidth, mScreenHeight);
 }
 
 void Scene::render()
@@ -773,7 +822,7 @@ void Scene::render()
 				continue;
 			}
 
-			auto mvp = getOrthoMVP();
+			auto mvp = getOrthoMVP(*kv.second);
 			glUniformMatrix4fv(mUniformLocationMap[mOverlayProgram]["u_MVP"], 1, GL_FALSE, mvp.m);
 			glUniform1i(mUniformLocationMap[mOverlayProgram]["s_texture"], 0);
 
@@ -918,9 +967,49 @@ void Scene::setOverlayEnabled(const std::string& name, bool enabled)
 {
 	auto it = mOverlays.find(name);
 	if(it == mOverlays.end()) {
-		throw std::runtime_error("Tried getting a non-existing model\n");
+		throw std::runtime_error("Tried getting a non-existing overlay\n");
 	} else {
 		it->second->setEnabled(enabled);
+	}
+}
+
+void Scene::setOverlayPosition(const std::string& name, unsigned int x, unsigned int y, unsigned int w, unsigned int h)
+{
+	auto it = mOverlays.find(name);
+	if(it == mOverlays.end()) {
+		throw std::runtime_error("Tried getting a non-existing overlay\n");
+	} else {
+		it->second->setPosition(x, y, w, h);
+	}
+}
+
+void Scene::enableText(const std::string& fontpath)
+{
+	if(mTextRenderer)
+		throw std::runtime_error("enableText() can only be called once\n");
+
+	mTextRenderer = std::unique_ptr<Common::TextRenderer>(new TextRenderer(fontpath.c_str(), 24));
+}
+
+void Scene::addOverlayText(const std::string& name, const std::string& contents,
+		const Common::Color& color, float scale,
+		unsigned int x, unsigned int y, bool centered)
+{
+	auto texture = mTextRenderer->renderText(contents.c_str(), color);
+	auto it = mOverlays.find(name);
+	auto w = texture->getWidth()  * scale;
+	auto h = texture->getHeight() * scale;
+	auto mx = centered ? x - w / 2 : x;
+	auto my = centered ? y + h / 2 : y;
+	if(it == mOverlays.end()) {
+		auto ov = boost::shared_ptr<Overlay>(new Overlay(texture, mScreenWidth, mScreenHeight));
+		ov->setPosition(mx, my, w, h);
+		ov->setEnabled(true);
+		mOverlays.insert({name, ov});
+	} else {
+		it->second->setTexture(texture);
+		it->second->setPosition(mx, my, w, h);
+		it->second->setEnabled(true);
 	}
 }
 

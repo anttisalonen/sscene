@@ -13,6 +13,7 @@
 #include "common/Matrix44.h"
 #include "common/Color.h"
 #include "common/Texture.h"
+#include "common/TextRenderer.h"
 
 #include "Model.h"
 
@@ -111,19 +112,32 @@ class Line {
 class Overlay {
 	public:
 		Overlay(const std::string& filename, unsigned int screenwidth, unsigned int screenheight);
+		Overlay(boost::shared_ptr<Common::Texture> texture, unsigned int screenwidth, unsigned int screenheight);
 		~Overlay();
 		GLuint getTexture() const;
 		GLuint getVertexBuffer() const;
 		GLuint getTexCoordBuffer() const;
 		void setEnabled(bool e) { mEnabled = e; }
 		bool isEnabled() const { return mEnabled; }
+		void setPosition(unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+		void setTexture(boost::shared_ptr<Common::Texture> texture);
+		unsigned int getX() const;
+		unsigned int getY() const;
+		unsigned int getW() const;
+		unsigned int getH() const;
 		static const unsigned int VERTEX_POS_INDEX;
 		static const unsigned int TEXCOORD_INDEX;
 
 	private:
+		void init();
+
 		boost::shared_ptr<Common::Texture> mTexture;
 		GLuint mVBOIDs[2];
 		bool mEnabled;
+		unsigned int mX = 0;
+		unsigned int mY = 0;
+		unsigned int mW;
+		unsigned int mH;
 };
 
 struct Shader;
@@ -157,6 +171,12 @@ class Scene {
 		void setClearColor(const Common::Color& color);
 		void addOverlay(const std::string& name, const std::string& filename);
 		void setOverlayEnabled(const std::string& name, bool enabled);
+		void setOverlayPosition(const std::string& name, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+
+		void enableText(const std::string& fontpath);
+		void addOverlayText(const std::string& name, const std::string& contents,
+				const Common::Color& color, float scale,
+				unsigned int x, unsigned int y, bool centered);
 		void setWireframe(bool w);
 		boost::shared_ptr<MeshInstance> addMeshInstance(const std::string& name,
 				const std::string& modelname,
@@ -168,7 +188,7 @@ class Scene {
 		void updateFrameMatrices(const Camera& cam);
 		GLuint loadShader(const Shader& s);
 		boost::shared_ptr<Common::Texture> getModelTexture(const std::string& mname) const;
-		Common::Matrix44 getOrthoMVP() const;
+		Common::Matrix44 getOrthoMVP(const Overlay& ov) const;
 
 		float mScreenWidth;
 		float mScreenHeight;
@@ -201,6 +221,8 @@ class Scene {
 		float mFOV;
 		float mZFar;
 		Common::Color mClearColor;
+
+		std::unique_ptr<Common::TextRenderer> mTextRenderer;
 };
 
 }

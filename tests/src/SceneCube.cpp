@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <sstream>
+
 #include "sscene/Scene.h"
 
 #include "common/Math.h"
@@ -28,7 +33,6 @@ class SceneCube : public Common::Driver {
 		bool mAmbientLightEnabled;
 		bool mDirectionalLightEnabled;
 		bool mPointLightEnabled;
-		bool mOverlayEnabled;
 		bool mWireframe;
 		std::map<SDLKey, std::function<void (float)>> mControls;
 		Common::Vector3 mOldLinePos;
@@ -65,7 +69,6 @@ SceneCube::SceneCube()
 	mAmbientLightEnabled(true),
 	mDirectionalLightEnabled(true),
 	mPointLightEnabled(true),
-	mOverlayEnabled(false),
 	mWireframe(false)
 {
 	mControls[SDLK_UP] = [&] (float p) { mCamera.setForwardMovement(p); };
@@ -134,6 +137,8 @@ SceneCube::SceneCube()
 	mScene.getPointLight().setState(mPointLightEnabled);
 	mScene.getPointLight().setAttenuation(Vector3(0, 0, 3));
 	mScene.getPointLight().setColor(Vector3(0.9, 0.2, 0.4));
+
+	mScene.enableText("share/DejaVuSans.ttf");
 }
 
 bool SceneCube::handleKeyDown(float frameTime, SDLKey key)
@@ -165,9 +170,19 @@ bool SceneCube::handleKeyDown(float frameTime, SDLKey key)
 			mScene.setFOV(mScene.getFOV() + 10.0f);
 			std::cout << "FOV: " << mScene.getFOV() << "\n";
 		} else if(key == SDLK_F6) {
-			mOverlayEnabled = !mOverlayEnabled;
-			mScene.setOverlayEnabled("Overlay", mOverlayEnabled);
+			mScene.setOverlayEnabled("Overlay", false);
 		} else if(key == SDLK_F7) {
+			mScene.setOverlayEnabled("Overlay", true);
+			unsigned int x = mCamera.getPosition().x * 100.0f;
+			unsigned int y = mCamera.getPosition().z * 100.0f;
+			unsigned int w = mCamera.getPosition().y * 100.0f;
+			unsigned int h = w * 3.0f / 4.0f;
+			std::stringstream ss;
+			ss << "Overlay position: " << x << " " << y << " " << w << " " << h;
+			mScene.setOverlayPosition("Overlay", x, y, w, h);
+			mScene.addOverlayText("Overlay text", ss.str(), Common::Color(255, 127, 127), 1.0f,
+					300, 50, true);
+		} else if(key == SDLK_F8) {
 			mWireframe = !mWireframe;
 			mScene.setWireframe(mWireframe);
 		}
