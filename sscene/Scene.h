@@ -176,7 +176,7 @@ class Scene {
 		void enableText(const std::string& fontpath);
 		void addOverlayText(const std::string& name, const std::string& contents,
 				const Common::Color& color, float scale,
-				unsigned int x, unsigned int y, bool centered);
+				float x, float y, bool centered);
 		void setWireframe(bool w);
 		boost::shared_ptr<MeshInstance> addMeshInstance(const std::string& name,
 				const std::string& modelname,

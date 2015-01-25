@@ -181,7 +181,7 @@ bool SceneCube::handleKeyDown(float frameTime, SDLKey key)
 			ss << "Overlay position: " << x << " " << y << " " << w << " " << h;
 			mScene.setOverlayPosition("Overlay", x, y, w, h);
 			mScene.addOverlayText("Overlay text", ss.str(), Common::Color(255, 127, 127), 1.0f,
-					300, 50, true);
+					0.375f, 0.083f, true);
 		} else if(key == SDLK_F8) {
 			mWireframe = !mWireframe;
 			mScene.setWireframe(mWireframe);

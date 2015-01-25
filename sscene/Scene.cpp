@@ -993,14 +993,16 @@ void Scene::enableText(const std::string& fontpath)
 
 void Scene::addOverlayText(const std::string& name, const std::string& contents,
 		const Common::Color& color, float scale,
-		unsigned int x, unsigned int y, bool centered)
+		float x, float y, bool centered)
 {
 	auto texture = mTextRenderer->renderText(contents.c_str(), color);
 	auto it = mOverlays.find(name);
 	auto w = texture->getWidth()  * scale;
 	auto h = texture->getHeight() * scale;
-	auto mx = centered ? x - w / 2 : x;
-	auto my = centered ? y + h / 2 : y;
+	auto nx = x * mScreenWidth;
+	auto ny = y * mScreenWidth;
+	auto mx = centered ? nx - w / 2 : nx;
+	auto my = centered ? ny + h / 2 : ny;
 	if(it == mOverlays.end()) {
 		auto ov = boost::shared_ptr<Overlay>(new Overlay(texture, mScreenWidth, mScreenHeight));
 		ov->setPosition(mx, my, w, h);
