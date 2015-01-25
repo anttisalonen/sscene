@@ -219,6 +219,15 @@ unsigned int Overlay::getH() const
 	return mH;
 }
 
+float Overlay::getDepth() const
+{
+	return mDepth;
+}
+
+void Overlay::setDepth(float d)
+{
+	mDepth = d;
+}
 
 Camera::Camera()
 	: mHRot(0.0f),
@@ -694,7 +703,7 @@ Common::Matrix44 Scene::getOrthoMVP(const Overlay& ov) const
 {
 	return HelperFunctions::scaleMatrix(Common::Vector3(ov.getW(), ov.getH(), 1.0f)) *
 			HelperFunctions::translationMatrix(Common::Vector3(ov.getX() - mScreenWidth * 0.5f,
-						ov.getY() - mScreenHeight * 0.5f, 0.0f)) *
+						ov.getY() - mScreenHeight * 0.5f, ov.getDepth())) *
 			HelperFunctions::orthoMatrix(mScreenWidth, mScreenHeight);
 }
 
@@ -817,7 +826,16 @@ void Scene::render()
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		for(const auto& kv : mOverlays) {
+		std::vector<std::pair<std::string, boost::shared_ptr<Overlay>>> sortedOverlays;
+		std::copy(mOverlays.begin(), mOverlays.end(), back_inserter(sortedOverlays));
+		std::sort(sortedOverlays.begin(),
+				sortedOverlays.end(),
+				[&] (const std::pair<std::string, boost::shared_ptr<Overlay>>& t1,
+					const std::pair<std::string, boost::shared_ptr<Overlay>>& t2) {
+					return t1.second->getDepth() <
+					t2.second->getDepth();
+				});
+		for(const auto& kv : sortedOverlays) {
 			if(!kv.second->isEnabled()) {
 				continue;
 			}
@@ -982,6 +1000,17 @@ void Scene::setOverlayPosition(const std::string& name, unsigned int x, unsigned
 		it->second->setPosition(x, y, w, h);
 	}
 }
+
+void Scene::setOverlayDepth(const std::string& name, float depth)
+{
+	auto it = mOverlays.find(name);
+	if(it == mOverlays.end()) {
+		throw std::runtime_error("Tried getting a non-existing overlay\n");
+	} else {
+		it->second->setDepth(depth);
+	}
+}
+
 
 void Scene::enableText(const std::string& fontpath)
 {

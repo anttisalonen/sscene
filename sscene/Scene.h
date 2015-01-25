@@ -127,6 +127,8 @@ class Overlay {
 		unsigned int getH() const;
 		static const unsigned int VERTEX_POS_INDEX;
 		static const unsigned int TEXCOORD_INDEX;
+		float getDepth() const;
+		void setDepth(float d);
 
 	private:
 		void init();
@@ -138,6 +140,7 @@ class Overlay {
 		unsigned int mY = 0;
 		unsigned int mW;
 		unsigned int mH;
+		float mDepth = 0.0f;
 };
 
 struct Shader;
@@ -172,6 +175,7 @@ class Scene {
 		void addOverlay(const std::string& name, const std::string& filename);
 		void setOverlayEnabled(const std::string& name, bool enabled);
 		void setOverlayPosition(const std::string& name, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+		void setOverlayDepth(const std::string& name, float depth);
 
 		void enableText(const std::string& fontpath);
 		void addOverlayText(const std::string& name, const std::string& contents,
