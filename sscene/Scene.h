@@ -148,6 +148,7 @@ struct Shader;
 class Scene {
 	public:
 		Scene(float screenWidth, float screenHeight);
+		void init();
 		Camera& getDefaultCamera();
 		void addSkyBox();
 		Light& getAmbientLight();

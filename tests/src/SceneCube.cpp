@@ -71,6 +71,8 @@ SceneCube::SceneCube()
 	mPointLightEnabled(true),
 	mWireframe(false)
 {
+	mScene.init();
+
 	mControls[SDLK_UP] = [&] (float p) { mCamera.setForwardMovement(p); };
 	mControls[SDLK_PAGEUP] = [&] (float p) { mCamera.setUpwardsMovement(p); };
 	mControls[SDLK_RIGHT] = [&] (float p) { mCamera.setSidewaysMovement(p); };

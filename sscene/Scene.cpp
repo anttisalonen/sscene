@@ -546,6 +546,10 @@ Scene::Scene(float screenWidth, float screenHeight)
 	mZFar(200.0f),
 	mClearColor(0, 0, 0)
 {
+}
+
+void Scene::init()
+{
 	GLenum glewerr = glewInit();
 	if (glewerr != GLEW_OK) {
 		std::cerr << "Unable to initialise GLEW.\n";
@@ -619,7 +623,7 @@ Scene::Scene(float screenWidth, float screenHeight)
 	HelperFunctions::enableDepthTest();
 	glEnable(GL_TEXTURE_2D);
 
-	glViewport(0, 0, screenWidth, screenHeight);
+	glViewport(0, 0, mScreenWidth, mScreenHeight);
 
 	glUseProgram(mSceneProgram);
 }
